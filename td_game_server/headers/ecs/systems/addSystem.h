@@ -6,7 +6,6 @@
 #include <atomic>
 #include <chrono>
 
-#include "cst.h"
 #include "checkpointList.h"
 
 class AddSystem

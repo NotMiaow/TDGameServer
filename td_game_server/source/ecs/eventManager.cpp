@@ -1,6 +1,6 @@
-#include "eventHandler.h"
+#include "eventManager.h"
 
-void EventHandler::Seed(CheckpointList<int>& ints)
+void EventManager::Seed(CheckpointList<int>& ints)
 {
     m_ints = &ints;
     //Data sample

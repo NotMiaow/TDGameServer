@@ -5,11 +5,11 @@
 
 #include "checkpointList.h"
 
-class EventHandler
+class EventManager
 {
 public:
-    EventHandler() { }
-    ~EventHandler() { }
+    EventManager() { }
+    ~EventManager() { }
     void Seed(CheckpointList<int>& ints);
     void Terminate();
 private:

@@ -1,6 +1,6 @@
 #include "ecs.h"
 
-ECS::ECS()
+ECS::ECS(bool& terminate, NetworkManager* networkmanager, Queue<Event*>* eventQueue, Client* clients)
 {
     //Fields
     m_alive = true;
@@ -9,8 +9,8 @@ ECS::ECS()
     m_ints = CheckpointList<int>();
 
     //Event handler
-    m_eventHandler = EventHandler();
-    m_eventHandler.Seed(m_ints);
+    m_eventManager = EventManager();
+    m_eventManager.Seed(m_ints);
 
     //Systems
     m_addSystem = AddSystem(m_ints);
