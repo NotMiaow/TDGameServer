@@ -1,5 +1,5 @@
-#ifndef CONSTANTS_H__
-#define CONSTANTS_H__
+#ifndef CST_H__
+#define CST_H__
 
 #include <string>
 
@@ -21,6 +21,7 @@ const int GRID_SIZE_X = 11;
 const int GRID_SIZE_Y = 11;
 const int DESPAWN_SIZE = 4;
 const int STARTING_GOLD = 10000;
+const int POST_GAME_DURATION = 1; //Milliseconds
 
 //Debugging constants
 //These constants are used to fake that a clients were assigned to this game server

@@ -1,10 +1,12 @@
 #include "networkManager.h"
 
-NetworkManager::NetworkManager(bool& terminate, const int serverPort, Queue<Action*>* actionQueue)
+NetworkManager::NetworkManager(std::shared_future<void>&& serverFuture, const int serverPort, Queue<Action*>* actionQueue)
 {
+	m_serverFuture = serverFuture;
+    m_alive = true;
+
 	m_clientsPort = serverPort;
 	m_actionQueue = actionQueue;
-	m_terminate = terminate;
 
 	for (int i = 0; i < MAX_CLIENTS; i++)
 		m_socketActive[i] = false;
@@ -59,7 +61,7 @@ bool NetworkManager::SetUpClientEnvironment(const int serverPort)
 
 void NetworkManager::AcceptConnection(sockaddr_in& address)
 {
-	while (!m_terminate)
+	while (m_alive)
 	{
 		for (int i = 0; i < MAX_CLIENTS; i++)
 		{
@@ -106,12 +108,18 @@ void NetworkManager::ListenToClient(const int& socketId)
 			m_socketActive[socketId] = false;
 			return;
 		}
-	} while (iResult > 0 && !m_terminate);
+	} while (iResult > 0 && m_alive);
 	m_socketActive[socketId] = false;
 
 	Action* disconnectAction = CreateDisconnectAction(socketId);
 	m_actionQueue->QueueUp(disconnectAction);
 	iResult = shutdown(m_clientSockets[socketId], SHUT_WR);
+}
+
+void NetworkManager::WaitForTerminate()
+{
+    while(m_serverFuture.wait_for(std::chrono::milliseconds(1000)) == std::future_status::timeout) { }
+    m_alive = false;
 }
 
 void NetworkManager::MessageClient(const int& socketId, std::string message)

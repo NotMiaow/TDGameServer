@@ -36,7 +36,7 @@ static Event* CreateReadyUpEvent(const int& clientId)
 static Event* CreateBuildTowerEvent(const int& clientId, std::vector<std::string> elements)
 {
 	int towerType;
-	Position position;
+	Vector2 position;
 
 	if (elements.size() != 2) return CreateErrorEvent(clientId, EBuildTower, GEWrongParemeterAmount);
 	if (!ToInt(elements[0], towerType)) return CreateErrorEvent(clientId, EBuildTower, GEWrongParameterType);

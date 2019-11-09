@@ -1,12 +1,15 @@
 #include "logic.h"
 
-Logic::Logic(bool & terminate, Client* clients, Queue<Action*>* actionQueue, Queue<Event*>* eventQueue) {
-	m_terminate = terminate;
+Logic::Logic(std::shared_future<void>&& serverFuture, Client* clients, Queue<Action*>* actionQueue, Queue<Event*>* eventQueue) {
+	m_serverFuture = serverFuture;
+	m_alive = true;
+
 	m_actionQueue = actionQueue;
 	m_eventQueue = eventQueue;
 
 	m_clients = clients;
 
+    m_terminateThread = std::thread(&Logic::WaitForTerminate, this);
 	for (int i = 0; i < PROCESSING_THREADS_COUNT; i++)
 		m_threads[i] = std::thread(&Logic::ProcessActions, this, i);
 }
@@ -18,19 +21,27 @@ Logic::Logic()
 
 Logic::~Logic()
 {
+    m_terminateThread.join();
 	for (int i = 0; i < PROCESSING_THREADS_COUNT; i++)
 		m_threads[i].join();
 }
 
 void Logic::ProcessActions(const int& threadID)
 {
-	while (!m_terminate)
+	while (m_alive)
 	{
 		Action* a = m_actionQueue->GetComponent();
 		if (a != nullptr)
 			SwitchAction(a);
 	}
 }
+
+void Logic::WaitForTerminate()
+{
+    while(m_serverFuture.wait_for(std::chrono::milliseconds(1000)) == std::future_status::timeout) { }
+    m_alive = false;
+}
+
 
 void Logic::SwitchAction(Action* action)
 {

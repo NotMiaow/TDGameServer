@@ -3,6 +3,9 @@
 
 #include <iostream>
 #include <thread>
+#include <chrono>
+#include <future>
+#include <atomic>
 
 #include "queue.h"
 #include "checkpointList.h"
@@ -15,11 +18,16 @@
 class ECS
 {
 public:
-	ECS(bool& terminate, NetworkManager* networkmanager, Queue<Event*>* eventQueue, Client* clients);
-	~ECS() { }
+	ECS(std::shared_future<void>&& serverFuture, NetworkManager* networkmanager, Queue<Event*>* eventQueue, Client* clients, std::atomic<bool>& serverAlive);
+	~ECS();
 	void Loop();
+	void WaitForTerminate();
 private:
-	bool m_alive;
+	std::shared_future<void> m_serverFuture;
+	std::atomic<bool>* m_serverAlive;
+	std::atomic<bool> m_alive;
+	std::thread m_terminateThread;
+	std::thread m_mainLoopThread;
 	//components
 	CheckpointList<int> m_ints;
 	//systems

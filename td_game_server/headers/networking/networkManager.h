@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <thread>
 #include <chrono>
+#include <future>
 
 // Need to link with Ws2_32.lib
 #pragma comment (lib, "Ws2_32.lib")
@@ -29,23 +30,27 @@ class NetworkManager
 {
 public:
 	NetworkManager();
-	NetworkManager(bool& terminate, const int serverPort, Queue<Action*>* actionQueue);
+	NetworkManager(std::shared_future<void>&& serverFuture, const int serverPort, Queue<Action*>* actionQueue);
 	~NetworkManager();
 	bool SetUpClientEnvironment(const int serverPort);
 	void AcceptConnection(sockaddr_in& address);
 	void ListenToClient(const int& socketId);
+	void WaitForTerminate();
 	void MessageClient(const int& socketId, std::string message);
 	void KickClient(const int& socketId);
 	void BroadCast(std::string& message);
 
 private:
-	bool m_terminate;
+	std::shared_future<void> m_serverFuture;
+	std::atomic<bool> m_alive;
+	std::thread m_terminateThread;
+	std::thread m_listeningThread;
+	std::thread m_clientThreads[MAX_CLIENTS];
+
 	int m_clientsPort;
 	Queue<Action*>* m_actionQueue;
 	int m_listeningSocket;
-	std::thread m_listeningThread;
 	int m_clientSockets[MAX_CLIENTS];
-	std::thread m_clientThreads[MAX_CLIENTS];
 	bool m_socketActive[MAX_CLIENTS];
 };
 

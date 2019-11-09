@@ -86,7 +86,7 @@ static bool ToInt(const std::string& s, int& n)
 	return false;
 }
 
-static bool ToPosition(const std::string& s, Position& position)
+static bool ToPosition(const std::string& s, Vector2& position)
 {
 	int byteLen = (int)s.length();
 	bool foundY = false;
