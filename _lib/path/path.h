@@ -1,13 +1,12 @@
 #ifndef PATH_H__
 #define	PATH_H__
 
-#include "node.h"
 #include "chain.h"
-#include "position.h"
+#include "vector2.h"
 
 struct Path
 {
-	Chain<Position>* path;
+	Chain<Vector2>* path;
 	int length;
 	int lastYDirection;
 	int lastXDirection;

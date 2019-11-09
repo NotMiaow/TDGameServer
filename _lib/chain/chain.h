@@ -2,22 +2,24 @@
 #define CHAIN_H__
 
 #include <iostream>
-#include "node.h"
 
 template <class T>
 class Chain
 {
 public:
+	template <class U>
+	struct Node
+	{
+		U component;
+		Node<U>* next;
+	};
 	Chain();
 	Chain(const Chain& source);
 	~Chain();
 	void AddHead(T& component);
 	void AddTail(T& component);
-	void InsertBefore(T& component, Node<T>* node);
-	void InsertAt(T& component, int pos);
 	void RemoveHead();
 	void RemoveTail();
-	void Remove(Node<T>* node);
 	Node<T>* GetHead() const;
 	Node<T>* GetTail() const;
 	Node<T>* GetNext(Node<T> current) const;
@@ -25,6 +27,7 @@ public:
 private:
 	int m_size;
 	Node<T>* m_head;
+	Node<T>* m_tail;
 };
 
 template<class T>
@@ -90,56 +93,6 @@ inline void Chain<T>::AddTail(T& component)
 }
 
 template<class T>
-inline void Chain<T>::InsertBefore(T& component, Node<T>* node)
-{
-	if (node == m_head || m_head == NULL)
-	{
-		AddHead(component);
-		return;
-	}
-
-	Node<T>* previous = m_head;
-	while (previous->next->next != NULL)
-	{
-		if (previous->next->next == node)
-		{
-			Node<T>* temp = new Node<T>();
-			temp->component = component;
-			temp->next = previous->next->next;
-			previous->next = temp;
-			return;
-		}
-		previous = GetNext(*previous);
-	}
-}
-
-template<class T>
-inline void Chain<T>::InsertAt(T& component, int pos)
-{
-	if (pos == 0)
-	{
-		AddHead(component);
-		return;
-	}
-	if (pos > m_size)
-		return;
-
-	Node<T>* node = m_head;
-	while (pos--)
-	{
-		if (pos == 0)
-		{
-			Node<T>* temp = new Node<T>();
-			temp->component = component;
-			temp->next = node->next;
-			node->next = temp;
-		}
-		else node = GetNext(*node);
-	}
-	m_size++;
-}
-
-template<class T>
 inline void Chain<T>::RemoveHead()
 {
 	if (m_head == NULL)
@@ -173,44 +126,13 @@ inline void Chain<T>::RemoveTail()
 }
 
 template<class T>
-inline void Chain<T>::Remove(Node<T>* node)
-{
-	if (m_head == node)
-	{
-		if (m_head->next == NULL)
-		{
-			delete m_head;
-			m_head = NULL;
-		}
-		else
-		{
-			m_head->component = m_head->next->component;
-			Node<T>* temp = m_head->next;
-			m_head->next = m_head->next->next;
-			delete temp;
-		}
-		m_size--;
-		return;
-	}
-	Node<T>* previous = m_head;
-	while (previous->next != NULL && previous->next != node)
-		previous = previous->next;
-	if (previous->next == NULL)
-		return;
-
-	previous->next = previous->next->next;
-	delete(node);
-	m_size--;
-}
-
-template<class T>
-inline Node<T>* Chain<T>::GetHead() const
+inline Chain<T>::Node<T>* Chain<T>::GetHead() const
 {
 	return m_head;
 }
 
 template<class T>
-inline Node<T>* Chain<T>::GetTail() const
+inline Chain<T>::Node<T>* Chain<T>::GetTail() const
 {
 	Node<T>* last = m_head;
 	while (last->next != NULL)
@@ -219,7 +141,7 @@ inline Node<T>* Chain<T>::GetTail() const
 }
 
 template<class T>
-inline Node<T>* Chain<T>::GetNext(Node<T> current) const
+inline Chain<T>::Node<T>* Chain<T>::GetNext(Node<T> current) const
 {
 	return current.next;
 }

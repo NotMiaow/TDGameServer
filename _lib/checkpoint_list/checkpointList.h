@@ -38,8 +38,6 @@ public:
 	Node<T>* InsertAfterNode(const T& data, Node<T>* node);
 	TabNode<T>* InsertAfterTab(TabNode<T>* tabNode);
 	CheckpointNode<T>* InsertAfterCheckpoint(Node<T>* node, CheckpointNode<T>* checkpointNode, TabNode<T>* tabNode);
-	void InsertBeforeNode(const T& data, const Node<T>* node = 0);
-	void InsertBeforeCheckpoint(Node<T>* node, const CheckpointNode<T>* checkpointNode, const int& tabIndex = 0);
 	void Clear();
 private:
 	int m_size;
@@ -231,76 +229,6 @@ inline CheckpointList<T>::CheckpointNode<T>* CheckpointList<T>::InsertAfterCheck
 	temp = new CheckpointNode<T>(node, checkpointNode->next);
 	checkpointNode->next = temp;
 	return temp;
-}
-
-template<class T>
-inline void CheckpointList<T>::InsertBeforeNode(const T& data, const Node<T>* node)
-{
-	if (node == m_head)
-	{
-		Node<T>* temp = new Node<T>(data, 0);
-		if (m_head == 0)
-			m_head = temp;
-		else
-		{
-			temp->next = m_head;
-			m_head = temp;
-		}
-		m_size++;
-		return;
-	}
-	
-	Node<T>* prev = m_head;
-	while (prev->next != 0)
-	{
-		if(prev->next == node)
-		{
-			Node<T>* temp = new Node<T>(data, prev->next);
-			prev->next = temp;
-			m_size++;
-			return;
-		}
-		prev = prev->next;
-	}
-	Node<T>* temp = new Node<T>(data, 0);
-	prev->next = temp;
-}
-
-template<class T>
-inline void CheckpointList<T>::InsertBeforeCheckpoint(Node<T>* node, const CheckpointNode<T>* checkpointNode, const int& tabIndex)
-{
-	int cnt = 0;
-	TabNode<T>* tabIt = m_tabHead;
-	while(cnt < tabIndex)
-	{
-		if(tabIt == 0) return;
-		tabIt = tabIt->next;
-	}
-
-	if(checkpointNode == tabIt->checkpointNode)
-	{
-		CheckpointNode<T>* temp = new CheckpointNode<T>(node, 0);
-		if(tabIt->checkpointNode == 0)
-			tabIt->checkpointNode = temp;
-		else
-		{
-			temp->next = tabIt->checkpointNode;
-			tabIt->checkpointNode = temp;
-		}
-		return;
-	}
-
-	CheckpointNode<T>* prev = tabIt->checkpointNode;
-	while(prev->next != 0)
-	{
-		if(prev->next == checkpointNode)
-		{
-			CheckpointNode<T>* temp = new CheckpointNode<T>(node, checkpointNode->next);
-			prev->next = temp;
-			return;
-		}
-		prev = prev->next;
-	}
 }
 
 template<class T>

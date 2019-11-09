@@ -4,12 +4,16 @@
 #include <iostream>
 #include <mutex>
 
-#include "node.h"
-
 template<class T>
 class Queue
 {
 public:
+	template <class U>
+	struct Node
+	{
+		U component;
+		Node<U>* next;
+	};
 	Queue();
 	void QueueUp(T& component);
 	T GetComponent();

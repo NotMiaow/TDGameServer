@@ -7,7 +7,7 @@
 #include <string>
 #include <sstream>
 
-#include "node.h"
+#include "checkpointList.h"
 #include "chain.h"
 #include "resourceComponent.h"
 #include "basicLib.h"
@@ -86,13 +86,13 @@ struct ReadyUpEvent : public Event
 	EventType GetType() const { return EReadyUp; }
 	std::string ToNetworkable() const
 	{
-		Node<ResourceComponent>* node = resources->GetHead();
+		CheckpointList<ResourceComponent>::Node<ResourceComponent>* node = resources->GetNodeHead();
 		std::ostringstream os;
 		os << "{" << EReadyUp << ";" << playerPosition << ";";
 		while (node != NULL)
 		{
-			os << node->component.gold << ((node->next != NULL) ? ";" : "");
-			node = resources->GetNext(*node);
+			os << node->data.gold << ((node->next != NULL) ? ";" : "");
+			node = resources->GetNextNode(&*node);
 		}
 		os << "}";
 		std::cout << os.str() << std::endl;
@@ -100,7 +100,7 @@ struct ReadyUpEvent : public Event
 	}
 
 	int playerPosition;
-	Chain<ResourceComponent>* resources;
+	CheckpointList<ResourceComponent>* resources;
 };
 
 struct SpawnUnitGroupEvent : public Event
@@ -123,7 +123,7 @@ struct NewPathEvent : public Event
 	{
 		std::ostringstream os;
 		os << "{" << ENewPath << ";" << motorPosition << ";";
-		Node<Position>* node = path->GetHead();
+		Chain<Vector2>::Node<Vector2>* node = path->GetHead();
 		while (node != NULL)
 		{
 			os << "(" << node->component.y << ":" << node->component.x << ")" << (node->next != NULL ? ";" : "");
@@ -134,7 +134,7 @@ struct NewPathEvent : public Event
 	}
 
 	int motorPosition;
-	Chain<Position>* path;
+	Chain<Vector2>* path;
 };
 
 struct RageEvent : public Event
@@ -153,7 +153,7 @@ struct RageEvent : public Event
 
 struct BuildTowerEvent : public Event
 {
-	BuildTowerEvent(const int&  clientId, const int& towerType, const Position& position)
+	BuildTowerEvent(const int&  clientId, const int& towerType, const Vector2& position)
 	{
 
 		this->clientId = clientId;
@@ -169,7 +169,7 @@ struct BuildTowerEvent : public Event
 	}
 
 	int towerType;
-	Position position;
+	Vector2 position;
 };
 
 struct SellTowerEvent : public Event
