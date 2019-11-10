@@ -9,7 +9,6 @@ static const int MAX_CLIENTS = 4;
 //Networking constants
 static const int PROCESSING_THREADS_COUNT = 8;
 static const int TOKEN_LENGTH = 8;
-static const int CONNECTION_THREADS_SLEEPING_TIME = 4;          //Check if any references*********** delete if none
 
 //Engine constants
 enum State { MoveInSpawn, MoveInPath, MoveInDespawn, Rage, Despawn };

@@ -6,11 +6,9 @@
 struct PlayerComponent
 {
 	Client* client;
-	bool alive;
 	bool connected;
 	bool ready;
-	int towersOwned;
-	int groupsOnGrid;
+	int lives;
 };
 
 #endif

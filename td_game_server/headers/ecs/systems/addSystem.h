@@ -14,7 +14,7 @@ public:
     AddSystem() { }
     ~AddSystem() { }
     AddSystem(CheckpointList<int>& ints);
-    void ProcessData();
+    void Loop();
     void Add(const int& data);
 private:
     CheckpointList<int>* m_ints;

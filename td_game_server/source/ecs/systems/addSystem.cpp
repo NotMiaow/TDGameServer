@@ -5,7 +5,7 @@ AddSystem::AddSystem(CheckpointList<int>& ints)
     m_ints = &ints;
 }
 
-void AddSystem::ProcessData()
+void AddSystem::Loop()
 {
     CheckpointList<int>::Node<int>* intN = m_ints->GetNodeHead();
     while(intN != 0)

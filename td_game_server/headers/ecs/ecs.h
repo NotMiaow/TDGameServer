@@ -9,16 +9,18 @@
 
 #include "queue.h"
 #include "checkpointList.h"
+#include "event.h"
 #include "client.h"
 #include "networkManager.h"
 #include "eventManager.h"
+
 #include "addSystem.h"
-#include "event.h"
+#include "timeSystem.h"
 
 class ECS
 {
 public:
-	ECS(std::shared_future<void>&& serverFuture, NetworkManager* networkmanager, Queue<Event*>* eventQueue, Client* clients, std::atomic<bool>& serverAlive);
+	ECS(std::shared_future<void>&& serverFuture, std::atomic<bool>& serverAlive, NetworkManager* networkmanager, Queue<Event*>* eventQueue, Client* clients);
 	~ECS();
 	void Loop();
 	void WaitForTerminate();
@@ -31,6 +33,7 @@ private:
 	//components
 	CheckpointList<int> m_ints;
 	//systems
+	TimeSystem m_timeSystem;
 	AddSystem m_addSystem;
 	//event handler
 	EventManager m_eventManager;

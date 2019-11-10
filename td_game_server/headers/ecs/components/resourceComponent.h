@@ -3,6 +3,7 @@
 
 struct ResourceComponent
 {
+	int income;
 	int gold;
 };
 

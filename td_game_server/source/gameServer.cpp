@@ -9,7 +9,7 @@ GameServer::GameServer(const int& gameServerPort, Client* clients)
 	m_actionQueue = new Queue<Action*>();
 	m_networkManager = new NetworkManager(std::move(m_futureObj), gameServerPort, m_actionQueue);
 	Queue<Event*>* eventQueue = new Queue<Event*>();
-	m_ecs = new ECS(std::move(m_futureObj), m_networkManager, eventQueue, clients, std::ref(m_alive));
+	m_ecs = new ECS(std::move(m_futureObj), std::ref(m_alive), m_networkManager, eventQueue, clients);
 	m_logic = new Logic(std::move(m_futureObj), clients, m_actionQueue, eventQueue);
 
 	m_terminateThread = std::thread(&GameServer::WaitForTerminate, this);
