@@ -1,24 +1,26 @@
 #include "ecs.h"
 
-ECS::ECS(std::shared_future<void>&& serverFuture, std::atomic<bool>& serverAlive, NetworkManager* networkmanager, Queue<Event*>* eventQueue, Client* clients)
+ECS::ECS(NetworkManager* networkmanager, Queue<Event*>* eventQueue, Client* clients, std::shared_future<void>&& serverFuture, std::atomic<bool>& serverAlive)
 {
+    //Components
+//    m_ints = CheckpointList<int>();
+    m_motors = CheckpointList<MotorComponent>();
+    m_transforms = CheckpointList<TransformComponent>();
+
+
+    //Event handler
+    m_eventManager = EventManager(m_motors, m_transforms);
+
+    //Systems
+    m_timeSystem = TimeSystem();
+    m_movementSystem = MovementSystem(m_timeSystem, m_motors, m_transforms);
+
     //Server termination
 	m_serverFuture = serverFuture;
     m_serverAlive = &serverAlive;
     m_alive = true;
     m_terminateThread = std::thread(&ECS::WaitForTerminate, this);
     m_mainLoopThread = std::thread(&ECS::Loop, this);
-
-    //Components
-    m_ints = CheckpointList<int>();
-
-    //Event handler
-    m_eventManager = EventManager();
-    m_eventManager.Seed(m_ints);
-
-    //Systems
-    m_timeSystem = TimeSystem();
-    m_addSystem = AddSystem(m_ints);
 }
 
 ECS::~ECS()
@@ -33,15 +35,15 @@ void ECS::Loop()
     while(m_alive)
     {
         m_timeSystem.Loop();
-        m_addSystem.Loop();
-        
+        m_movementSystem.Loop();
+
         //Kill server from within ecs
         //*m_serverAlive = false;
         //Example: After 3 loops
-        //TODO : implement end game sequence after this loop
         //Post game duration can be modified in cst.h
-        if(cnt++ == 3) *m_serverAlive = false;
+//        if(cnt++ == 3) *m_serverAlive = false;
     }
+    //POST GAME LOOP HERE
 }
 
 void ECS::WaitForTerminate()

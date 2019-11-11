@@ -3,6 +3,6 @@ project(td_game_server)
 
 set(SYSTEMS_SOURCE
     ${CMAKE_CURRENT_SOURCE_DIR}/timeSystem.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/addSystem.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/movementSystem.cpp
     PARENT_SCOPE
 )

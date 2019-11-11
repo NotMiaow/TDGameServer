@@ -126,7 +126,7 @@ struct NewPathEvent : public Event
 		Chain<Vector2>::Node<Vector2>* node = path->GetHead();
 		while (node != NULL)
 		{
-			os << "(" << node->component.y << ":" << node->component.x << ")" << (node->next != NULL ? ";" : "");
+			os << "(" << node->data.y << ":" << node->data.x << ")" << (node->next != NULL ? ";" : "");
 			node = path->GetNext(*node);
 		}
 		os << "}";

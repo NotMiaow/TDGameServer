@@ -1,10 +1,6 @@
 #ifndef NETWORK_MANAGER_H__
 #define NETWORK_MANAGER_H__
 
-#undef UNICODE
-
-#define WIN32_LEAN_AND_MEAN
-
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -13,10 +9,6 @@
 #include <thread>
 #include <chrono>
 #include <future>
-
-// Need to link with Ws2_32.lib
-#pragma comment (lib, "Ws2_32.lib")
-// #pragma comment (lib, "Mswsock.lib")
 
 #define DEFAULT_BUFLEN 512
 

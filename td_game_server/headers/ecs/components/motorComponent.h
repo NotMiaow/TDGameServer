@@ -3,10 +3,12 @@
 
 #include "vector2.h"
 #include "chain.h"
+#include "cst.h"
 
 struct MotorComponent
 {
-	Chain<Vector2>* path;
+	Behaviour behaviour;
+	Chain<Vector2> path;
 	float baseSpeed;
 	float curSpeed;
 };

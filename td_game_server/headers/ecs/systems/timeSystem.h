@@ -12,9 +12,11 @@ public:
 	~TimeSystem();
 	void Loop();
 	const double GetTime();
-	const double DeltaTime();
+	const float DeltaTime();
 private:
 	double m_currentTime;
+	float m_deltaTIme;
+
 	std::chrono::time_point<std::chrono::high_resolution_clock> m_curTime;
 	std::chrono::time_point<std::chrono::high_resolution_clock> m_prevTime;
 };

@@ -14,13 +14,16 @@
 #include "networkManager.h"
 #include "eventManager.h"
 
-#include "addSystem.h"
+#include "motorComponent.h"
+#include "transformComponent.h"
+
 #include "timeSystem.h"
+#include "movementSystem.h"
 
 class ECS
 {
 public:
-	ECS(std::shared_future<void>&& serverFuture, std::atomic<bool>& serverAlive, NetworkManager* networkmanager, Queue<Event*>* eventQueue, Client* clients);
+	ECS(NetworkManager* networkmanager, Queue<Event*>* eventQueue, Client* clients, std::shared_future<void>&& serverFuture, std::atomic<bool>& serverAlive);
 	~ECS();
 	void Loop();
 	void WaitForTerminate();
@@ -31,10 +34,11 @@ private:
 	std::thread m_terminateThread;
 	std::thread m_mainLoopThread;
 	//components
-	CheckpointList<int> m_ints;
+	CheckpointList<MotorComponent> m_motors;
+	CheckpointList<TransformComponent> m_transforms;
 	//systems
 	TimeSystem m_timeSystem;
-	AddSystem m_addSystem;
+	MovementSystem m_movementSystem;
 	//event handler
 	EventManager m_eventManager;
 };

@@ -14,7 +14,8 @@ void TimeSystem::Loop()
 {
 	m_prevTime = m_curTime;
 	m_curTime = std::chrono::high_resolution_clock::now();
-	m_currentTime += DeltaTime();
+	m_deltaTIme = (float)((std::chrono::duration<double>)(m_curTime - m_prevTime)).count();
+	m_currentTime += m_deltaTIme;
 }
 
 const double TimeSystem::GetTime()
@@ -22,8 +23,8 @@ const double TimeSystem::GetTime()
 	return m_currentTime;
 }
 
-const double TimeSystem::DeltaTime()
+const float TimeSystem::DeltaTime()
 {
-	return ((std::chrono::duration<double>)(m_curTime - m_prevTime)).count();
+	return m_deltaTIme;
 }
 

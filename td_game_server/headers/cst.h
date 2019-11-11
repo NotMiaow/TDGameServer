@@ -11,7 +11,7 @@ static const int PROCESSING_THREADS_COUNT = 8;
 static const int TOKEN_LENGTH = 8;
 
 //Engine constants
-enum State { MoveInSpawn, MoveInPath, MoveInDespawn, Rage, Despawn };
+enum Behaviour { Move, Rage, Despawn };
 const int MAX_GROUPS_ON_GRID = 9;
 const int SPAWN_POSITION_Y = -4;
 const int SPAWN_POSITION_X = 5;

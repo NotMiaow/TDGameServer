@@ -2,6 +2,10 @@
 #define EVENT_HANDLER_H__
 
 #include <iostream>
+#include <math.h>
+
+#include "motorComponent.h"
+#include "transformComponent.h"
 
 #include "checkpointList.h"
 
@@ -9,11 +13,13 @@ class EventManager
 {
 public:
     EventManager() { }
-    ~EventManager() { }
-    void Seed(CheckpointList<int>& ints);
-    void Terminate();
+    EventManager(CheckpointList<MotorComponent>& motors, CheckpointList<TransformComponent>& transforms);
+    ~EventManager();
 private:
-    CheckpointList<int>* m_ints;
+
+private:
+   	CheckpointList<MotorComponent>* m_motors;
+	CheckpointList<TransformComponent>* m_transforms;
 };
 
 #endif
