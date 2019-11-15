@@ -25,7 +25,7 @@ public:
     ~SharedQueue();
     void operator=(const SharedQueue& source);
     void Push(const T& element);
-    void Pop();
+    T Pop();
     T Front() const;
     T Get(Iterator<T>& iterator) const;
     int GetFrontPosition() const;
@@ -91,12 +91,13 @@ inline void SharedQueue<T>::Push(const T& element)
 }
 
 template<typename T>
-inline void SharedQueue<T>::Pop()
+inline T SharedQueue<T>::Pop()
 {
     m_mutex.lock();
     m_size--;
     m_front++;
     m_mutex.unlock();
+    return m_data[m_front];
 }
 
 template<typename T>

@@ -66,8 +66,9 @@ void MovementSystem::MoveMotor(MotorComponent& motor, TransformComponent& transf
 		//Set position as target's position
 		transform.position.x = targetPosition.x;
 		transform.position.y = targetPosition.y;
+		
 		//Remove target from motor's path
-		motor.path.Pop();
+		targetPosition = motor.path.Pop();
 
 		//Update normalised target
 		if(motor.path.GetSize())

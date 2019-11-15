@@ -23,7 +23,7 @@ public:
     ~Queue();
     void operator=(const Queue& source);
     void Push(const T& element);
-    void Pop();
+    T Pop();
     T Front() const;
     T Get(Iterator<T>& iterator) const;
     int GetFrontPosition() const;
@@ -86,10 +86,11 @@ inline void Queue<T>::Push(const T& element)
 }
 
 template<typename T>
-inline void Queue<T>::Pop()
+inline T Queue<T>::Pop()
 {
     m_size--;
     m_front++;
+    return m_data[m_front];
 }
 
 template<typename T>
