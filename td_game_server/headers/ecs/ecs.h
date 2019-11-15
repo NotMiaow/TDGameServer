@@ -7,6 +7,8 @@
 #include <future>
 #include <atomic>
 
+#include "vector2.h"
+#include "path.h"
 #include "queue.h"
 #include "checkpointList.h"
 #include "event.h"
@@ -23,7 +25,7 @@
 class ECS
 {
 public:
-	ECS(NetworkManager* networkmanager, Queue<Event*>* eventQueue, Client* clients, std::shared_future<void>&& serverFuture, std::atomic<bool>& serverAlive);
+	ECS(NetworkManager* networkmanager, SharedQueue<Event*>& eventQueue, Client* clients, std::shared_future<void>&& serverFuture, std::atomic<bool>& serverAlive);
 	~ECS();
 	void Loop();
 	void WaitForTerminate();

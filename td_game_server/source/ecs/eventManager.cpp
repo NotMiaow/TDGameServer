@@ -8,7 +8,7 @@ EventManager::EventManager(CheckpointList<MotorComponent>& motors, CheckpointLis
 
     //Create Motor
     MotorComponent motor;
-    Chain<Vector2> path;
+    Queue<Vector2> path(30);
     Vector2 target1;
     Vector2 target2;
     Vector2 target3;
@@ -21,10 +21,11 @@ EventManager::EventManager(CheckpointList<MotorComponent>& motors, CheckpointLis
     target3.y = 8;
     target4.x = 2;
     target4.y = GRID_SIZE_Y + DESPAWN_SIZE;
-    motor.path.AddHead(target4);
-    motor.path.AddHead(target3);
-    motor.path.AddHead(target2);
-    motor.path.AddHead(target1);
+    path.Push(target4);
+    path.Push(target3);
+    path.Push(target2);
+    path.Push(target1);
+    motor.path = path;
     motor.behaviour = Move;
     motor.baseSpeed = 2;
     motor.curSpeed = 2;
@@ -35,8 +36,8 @@ EventManager::EventManager(CheckpointList<MotorComponent>& motors, CheckpointLis
     transform.position.x = SPAWN_POSITION_X;
     transform.position.y = SPAWN_POSITION_Y;
     //Update normalised target
-	float distanceX = motor.path.GetHead()->data.x - transform.position.x;
-	float distanceY = motor.path.GetHead()->data.y - transform.position.y;
+	float distanceX = motor.path.Front().x - transform.position.x;
+	float distanceY = motor.path.Front().y - transform.position.y;
 	float distance = sqrt(pow(distanceX, 2) + pow(distanceY, 2));
 	transform.normalizedTarget.x = distanceX / distance;
 	transform.normalizedTarget.y = distanceY / distance;

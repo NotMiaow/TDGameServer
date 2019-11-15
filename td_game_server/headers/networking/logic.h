@@ -13,7 +13,7 @@
 #include "event.h"
 #include "eventTranslator.h"
 #include "actionLanguage.h"
-#include "queue.h"
+#include "shared_queue.h"
 #include "networkManager.h"
 
 #include "eventManager.h"
@@ -21,7 +21,7 @@
 class Logic
 {
 public:
-	Logic(std::shared_future<void>&& serverFuture, Client* clients, Queue<Action*>* actionQueue, Queue<Event*>* eventQueue);
+	Logic(std::shared_future<void>&& serverFuture, Client* clients, SharedQueue<Action*>& actionQueue, SharedQueue<Event*>& eventQueue);
 	Logic();
 	~Logic();
 	void ProcessActions(const int& threadID);
@@ -36,10 +36,10 @@ private:
 	std::atomic<bool> m_alive;
 	std::thread m_terminateThread;
 	std::thread m_threads[PROCESSING_THREADS_COUNT];
-	Queue<Action*>* m_actionQueue;
+	SharedQueue<Action*>* m_actionQueue;
 	NetworkManager* m_networkManager;
 	Client* m_clients;
-	Queue<Event*>* m_eventQueue;
+	SharedQueue<Event*>* m_eventQueue;
 };
 
 #endif

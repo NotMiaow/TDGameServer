@@ -1,12 +1,12 @@
 #include "networkManager.h"
 
-NetworkManager::NetworkManager(std::shared_future<void>&& serverFuture, const int serverPort, Queue<Action*>* actionQueue)
+NetworkManager::NetworkManager(std::shared_future<void>&& serverFuture, const int serverPort, SharedQueue<Action*>& actionQueue)
 {
 	m_serverFuture = serverFuture;
     m_alive = true;
 
 	m_clientsPort = serverPort;
-	m_actionQueue = actionQueue;
+	m_actionQueue = &actionQueue;
 
 	for (int i = 0; i < MAX_CLIENTS; i++)
 		m_socketActive[i] = false;
@@ -100,11 +100,11 @@ void NetworkManager::ListenToClient(const int& socketId)
 		if (iResult > 0)
 		{
 			Action* action = CreateAction(socketId, Split(recvbuf, iResult));
-			m_actionQueue->QueueUp(action);
+			m_actionQueue->Push(action);
 		}
 		else {
 			Action* disconnectAction = CreateDisconnectAction(socketId);
-			m_actionQueue->QueueUp(disconnectAction);
+			m_actionQueue->Push(disconnectAction);
 			m_socketActive[socketId] = false;
 			return;
 		}
@@ -112,7 +112,7 @@ void NetworkManager::ListenToClient(const int& socketId)
 	m_socketActive[socketId] = false;
 
 	Action* disconnectAction = CreateDisconnectAction(socketId);
-	m_actionQueue->QueueUp(disconnectAction);
+	m_actionQueue->Push(disconnectAction);
 	iResult = shutdown(m_clientSockets[socketId], SHUT_WR);
 }
 

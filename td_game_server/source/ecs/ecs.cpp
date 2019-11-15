@@ -1,9 +1,8 @@
 #include "ecs.h"
 
-ECS::ECS(NetworkManager* networkmanager, Queue<Event*>* eventQueue, Client* clients, std::shared_future<void>&& serverFuture, std::atomic<bool>& serverAlive)
+ECS::ECS(NetworkManager* networkmanager, SharedQueue<Event*>& eventQueue, Client* clients, std::shared_future<void>&& serverFuture, std::atomic<bool>& serverAlive)
 {
     //Components
-//    m_ints = CheckpointList<int>();
     m_motors = CheckpointList<MotorComponent>();
     m_transforms = CheckpointList<TransformComponent>();
 

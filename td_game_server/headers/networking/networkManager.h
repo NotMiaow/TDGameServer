@@ -12,9 +12,9 @@
 
 #define DEFAULT_BUFLEN 512
 
+#include "shared_queue.h"
 #include "actionLanguage.h"
 #include "action.h"
-#include "queue.h"
 #include "actionTranslator.h"
 #include "cst.h"
 
@@ -22,7 +22,7 @@ class NetworkManager
 {
 public:
 	NetworkManager();
-	NetworkManager(std::shared_future<void>&& serverFuture, const int serverPort, Queue<Action*>* actionQueue);
+	NetworkManager(std::shared_future<void>&& serverFuture, const int serverPort, SharedQueue<Action*>& actionQueue);
 	~NetworkManager();
 	bool SetUpClientEnvironment(const int serverPort);
 	void AcceptConnection(sockaddr_in& address);
@@ -40,7 +40,7 @@ private:
 	std::thread m_clientThreads[MAX_CLIENTS];
 
 	int m_clientsPort;
-	Queue<Action*>* m_actionQueue;
+	SharedQueue<Action*>* m_actionQueue;
 	int m_listeningSocket;
 	int m_clientSockets[MAX_CLIENTS];
 	bool m_socketActive[MAX_CLIENTS];

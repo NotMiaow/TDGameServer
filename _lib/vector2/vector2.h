@@ -1,5 +1,5 @@
-#ifndef POSITION_H__
-#define POSITION_H__
+#ifndef VECTOR_2_H__
+#define VECTOR_2_H__
 
 struct Vector2
 {

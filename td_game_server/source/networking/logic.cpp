@@ -1,11 +1,11 @@
 #include "logic.h"
 
-Logic::Logic(std::shared_future<void>&& serverFuture, Client* clients, Queue<Action*>* actionQueue, Queue<Event*>* eventQueue) {
+Logic::Logic(std::shared_future<void>&& serverFuture, Client* clients, SharedQueue<Action*>& actionQueue, SharedQueue<Event*>& eventQueue) {
 	m_serverFuture = serverFuture;
 	m_alive = true;
 
-	m_actionQueue = actionQueue;
-	m_eventQueue = eventQueue;
+	m_actionQueue = &actionQueue;
+	m_eventQueue = &eventQueue;
 
 	m_clients = clients;
 
@@ -30,9 +30,15 @@ void Logic::ProcessActions(const int& threadID)
 {
 	while (m_alive)
 	{
-		Action* a = m_actionQueue->GetComponent();
-		if (a != nullptr)
-			SwitchAction(a);
+		if (m_actionQueue->GetSize())
+		{
+			Action* a = m_actionQueue->Front();
+			if(a != 0)
+			{
+				SwitchAction(a);
+				m_actionQueue->Pop();
+			}
+		}
 	}
 }
 
@@ -41,7 +47,6 @@ void Logic::WaitForTerminate()
     while(m_serverFuture.wait_for(std::chrono::milliseconds(1000)) == std::future_status::timeout) { }
     m_alive = false;
 }
-
 
 void Logic::SwitchAction(Action* action)
 {
@@ -60,8 +65,6 @@ void Logic::SwitchAction(Action* action)
 		RelayToEventManager(action);
 		break;
 	}
-
-	delete action;
 }
 
 void Logic::HandleError(Action* action)
@@ -81,12 +84,12 @@ void Logic::ConnectClient(Action* action)
 				{
 					std::cout << "Kicking client with id: \"" << m_clients[i].id << "\" on socket \"" << m_clients[i].socketId << "\"" << std::endl;
 					Event* disconnectEvent = CreateDisconnectEvent(a->clientId, RNewLogin);
-					m_eventQueue->QueueUp(disconnectEvent);
+					m_eventQueue->Push(disconnectEvent);
 				}
 
 				m_clients[i].socketId = a->socketId;
 				Event* connectEvent = CreateConnectEvent(a->clientId);
-				m_eventQueue->QueueUp(connectEvent);
+				m_eventQueue->Push(connectEvent);
 				std::cout << "Client with id \"" << a->clientId << "\" and token \"" << a->sessionToken << "\" connected on socket \"" << a->socketId << "\"" << std::endl;
 				return;
 			}
@@ -94,9 +97,9 @@ void Logic::ConnectClient(Action* action)
 			{
 				std::cout << "Invalid session token, kicking client." << std::endl;
 				Action* errorAction = CreateErrorAction(a->socketId, a->clientId, AConnect, NEWrongSessionToken);
-				m_actionQueue->QueueUp(errorAction);
+				m_actionQueue->Push(errorAction);
 				Event* disconnectEvent = CreateDisconnectEvent(a->clientId);
-				m_eventQueue->QueueUp(disconnectEvent);
+				m_eventQueue->Push(disconnectEvent);
 				m_clients[i].socketId = -1;
 				return;
 			}
@@ -113,7 +116,7 @@ void Logic::DisconnectClient(Action* action)
 		{
 			std::cout << "Client disconnected from socket: " << a->socketId << std::endl;
 			Event* disconnectEvent = CreateDisconnectEvent(a->clientId, a->reason);
-			m_eventQueue->QueueUp(disconnectEvent);
+			m_eventQueue->Push(disconnectEvent);
 			m_clients[i].socketId = -1;
 		}
 	}
@@ -129,13 +132,13 @@ void Logic::RelayToEventManager(Action * action)
 			{
 				GameAction* a = dynamic_cast<GameAction*>(action);
 				Event* e = CreateGameEvent(a->clientId, Split(a->gameEvent, (int)a->gameEvent.length()));
-				m_eventQueue->QueueUp(e);
+				m_eventQueue->Push(e);
 				return;
 			}
 			else
 			{
 				Action* e = CreateErrorAction(action->socketId, action->clientId, AGameAction, NEWrongSessionToken);
-				m_actionQueue->QueueUp(e);
+				m_actionQueue->Push(e);
 				return;
 			}
 		}

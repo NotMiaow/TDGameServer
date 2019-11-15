@@ -133,6 +133,7 @@ inline CheckpointList<T>::Node<T>* CheckpointList<T>::GetNodeHead() const
 {
 	return m_head;
 }
+
 template<class T> 
 inline CheckpointList<T>::TabNode<T>* CheckpointList<T>::GetTabHead() const
 {

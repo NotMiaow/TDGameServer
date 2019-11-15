@@ -4,6 +4,9 @@
 #include <iostream>
 #include <math.h>
 
+#include "vector2.h"
+#include "queue.h"
+
 #include "motorComponent.h"
 #include "transformComponent.h"
 

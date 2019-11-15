@@ -5,8 +5,8 @@
 #include <chrono>
 #include <future>
 
+#include "shared_queue.h"
 #include "action.h"
-#include "queue.h"
 #include "cst.h"
 #include "networkManager.h"
 #include "logic.h"
@@ -30,7 +30,8 @@ private:
 	std::promise<void> m_exitSignal;
 	std::shared_future<void> m_futureObj;
 
-	Queue<Action*>* m_actionQueue;
+	SharedQueue<Event*> m_eventQueue;
+	SharedQueue<Action*> m_actionQueue;
 	NetworkManager* m_networkManager;
 	ECS* m_ecs;
 	Logic* m_logic;

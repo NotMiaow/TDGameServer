@@ -9,8 +9,9 @@
 #include "timeSystem.h"
 
 #include "checkpointList.h"
-#include "chain.h"
 #include "vector2.h"
+#include "path.h"
+#include "queue.h"
 #include "motorComponent.h"
 #include "transformComponent.h"
 

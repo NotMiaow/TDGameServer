@@ -1,15 +1,17 @@
-#ifndef QUEUE_H__
-#define QUEUE_H__
+#ifndef SHARED_QUEUE_H__
+#define SHARED_QUEUE_H__
+
+#include <mutex>
 
 template <typename T>
-class Queue
+class SharedQueue
 {
 public:
     template<typename U>
     struct Iterator
     {
     public:
-        Iterator(const Queue<T>& source) : capacity(source.m_capacity), front(source.m_front) { pos = front + 1; }
+        Iterator(const SharedQueue<T>& source) : capacity(source.m_capacity), front(source.m_front) { pos = front + 1; }
         int GetPos() { return pos; }
         bool End() { return pos == capacity; }
         int Next() { if(pos < capacity) pos++; return pos; }
@@ -18,10 +20,10 @@ public:
     private:
         int pos;
     };
-    Queue();
-    Queue(const int&);
-    ~Queue();
-    void operator=(const Queue& source);
+    SharedQueue();
+    SharedQueue(const int&);
+    ~SharedQueue();
+    void operator=(const SharedQueue& source);
     void Push(const T& element);
     void Pop();
     T Front() const;
@@ -32,10 +34,11 @@ public:
 private:
     int m_front, m_capacity, m_size;
     T* m_data;
+    std::mutex m_mutex;
 };
 
 template<typename T>
-inline Queue<T>::Queue()
+inline SharedQueue<T>::SharedQueue()
 {
     m_capacity = 4;
     m_front = m_capacity - 1;
@@ -44,7 +47,7 @@ inline Queue<T>::Queue()
 }
 
 template<typename T>
-inline Queue<T>::Queue(const int& capacity)
+inline SharedQueue<T>::SharedQueue(const int& capacity)
 {
     m_capacity = capacity;
     m_front = m_capacity - 1;
@@ -53,13 +56,13 @@ inline Queue<T>::Queue(const int& capacity)
 }
 
 template<typename T>
-inline Queue<T>::~Queue()
+inline SharedQueue<T>::~SharedQueue()
 {
     delete[] m_data;
 }
 
 template<typename T>
-inline void Queue<T>::operator=(const Queue<T>& source)
+inline void SharedQueue<T>::operator=(const SharedQueue<T>& source)
 {
     this->m_data = source.m_data;
     this->m_capacity = source.m_capacity;
@@ -68,8 +71,9 @@ inline void Queue<T>::operator=(const Queue<T>& source)
 }
 
 template<typename T>
-inline void Queue<T>::Push(const T& element)
+inline void SharedQueue<T>::Push(const T& element)
 {
+    m_mutex.lock();
     if(m_size == m_capacity)
     {
         m_front += m_size;
@@ -83,42 +87,44 @@ inline void Queue<T>::Push(const T& element)
     m_data[m_front] = element;
     m_size++;
     m_front--;
+    m_mutex.unlock();
 }
 
 template<typename T>
-inline void Queue<T>::Pop()
+inline void SharedQueue<T>::Pop()
 {
+    m_mutex.lock();
     m_size--;
     m_front++;
+    m_mutex.unlock();
 }
 
 template<typename T>
-inline T Queue<T>::Front() const
+inline T SharedQueue<T>::Front() const
 {
     return m_data[m_front + 1];
 }
 
 template<typename T>
-inline T Queue<T>::Get(Iterator<T>& iterator) const
+inline T SharedQueue<T>::Get(Iterator<T>& iterator) const
 {
     return m_data[iterator.GetPos()];
 }
 
-
 template<typename T>
-inline int Queue<T>::GetFrontPosition() const
+inline int SharedQueue<T>::GetFrontPosition() const
 {
     return m_front;
 }
 
 template<typename T>
-inline int Queue<T>::GetSize() const
+inline int SharedQueue<T>::GetSize() const
 {
     return m_size;
 }
 
 template<typename T>
-inline int Queue<T>::GetCapacity() const
+inline int SharedQueue<T>::GetCapacity() const
 {
     return m_capacity;
 }

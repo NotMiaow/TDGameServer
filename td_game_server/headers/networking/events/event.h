@@ -8,11 +8,11 @@
 #include <sstream>
 
 #include "checkpointList.h"
-#include "chain.h"
 #include "resourceComponent.h"
 #include "basicLib.h"
 #include "sharedLanguage.h"
 #include "eventLanguage.h"
+#include "queue.h"
 #include "vector2.h"
 
 struct Event
@@ -123,18 +123,14 @@ struct NewPathEvent : public Event
 	{
 		std::ostringstream os;
 		os << "{" << ENewPath << ";" << motorPosition << ";";
-		Chain<Vector2>::Node<Vector2>* node = path->GetHead();
-		while (node != NULL)
-		{
-			os << "(" << node->data.y << ":" << node->data.x << ")" << (node->next != NULL ? ";" : "");
-			node = path->GetNext(*node);
-		}
+		Queue<Vector2>::Iterator<Vector2> it(path);
+		while(!it.End()) os << "(" << path.Get(it).y << ":" << path.Get(it).x << ")" << (it.Next() == it.capacity ? "" : ";");
 		os << "}";
 		return os.str();
 	}
 
 	int motorPosition;
-	Chain<Vector2>* path;
+	Queue<Vector2> path;
 };
 
 struct RageEvent : public Event

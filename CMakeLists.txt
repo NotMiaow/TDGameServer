@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.16)
 project(td_game_server)
 
 #include headers
-include_directories(${PROJECT_BINARY_DIR}/_lib/chain)
 include_directories(${PROJECT_BINARY_DIR}/_lib/queue)
 include_directories(${PROJECT_BINARY_DIR}/_lib/vector2)
 include_directories(${PROJECT_BINARY_DIR}/_lib/path)
