@@ -21,8 +21,8 @@
 class Logic
 {
 public:
+	Logic() { }
 	Logic(std::shared_future<void>&& serverFuture, Client* clients, SharedQueue<Action*>& actionQueue, SharedQueue<Event*>& eventQueue);
-	Logic();
 	~Logic();
 	void ProcessActions(const int& threadID);
 	void WaitForTerminate();

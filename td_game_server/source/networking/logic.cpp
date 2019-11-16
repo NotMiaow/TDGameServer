@@ -14,11 +14,6 @@ Logic::Logic(std::shared_future<void>&& serverFuture, Client* clients, SharedQue
 		m_threads[i] = std::thread(&Logic::ProcessActions, this, i);
 }
 
-Logic::Logic()
-{
-
-}
-
 Logic::~Logic()
 {
     m_terminateThread.join();

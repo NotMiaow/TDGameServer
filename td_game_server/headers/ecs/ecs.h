@@ -25,6 +25,7 @@
 class ECS
 {
 public:
+	ECS() {}
 	ECS(NetworkManager* networkmanager, SharedQueue<Event*>& eventQueue, Client* clients, std::shared_future<void>&& serverFuture, std::atomic<bool>& serverAlive);
 	~ECS();
 	void Loop();

@@ -21,7 +21,7 @@
 class NetworkManager
 {
 public:
-	NetworkManager();
+	NetworkManager() { }
 	NetworkManager(std::shared_future<void>&& serverFuture, const int serverPort, SharedQueue<Action*>& actionQueue);
 	~NetworkManager();
 	bool SetUpClientEnvironment(const int serverPort);
