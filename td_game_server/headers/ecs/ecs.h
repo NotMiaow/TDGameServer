@@ -27,7 +27,7 @@ class ECS
 {
 public:
 	ECS() {}
-	ECS(NetworkManager* networkmanager, SharedQueue<Event*>& eventQueue, Client* clients);
+	ECS(NetworkManager* networkManager, SharedQueue<Event*>& eventQueue, Client* clients);
 	~ECS();
 	bool Loop();
 private:

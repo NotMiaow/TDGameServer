@@ -16,5 +16,4 @@ int main()
 	GameServer gameServer(27016, clients);
 	std::cin.get();
 	gameServer.Stop();
-	std::cin.get();
 }

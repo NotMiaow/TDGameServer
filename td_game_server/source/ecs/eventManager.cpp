@@ -1,9 +1,10 @@
 #include "eventManager.h"
 
-EventManager::EventManager(Client* clients, SharedQueue<Event*>& eventQueue,
+EventManager::EventManager(NetworkManager* networkManager, Client* clients, SharedQueue<Event*>& eventQueue,
                             CheckpointList<PlayerComponent>& players, CheckpointList<MotorComponent>& motors,
                             CheckpointList<TransformComponent>& transforms)
 {
+    m_networkManager = networkManager;
     m_eventQueue = &eventQueue;
 
     m_players = &players;
@@ -15,7 +16,7 @@ EventManager::EventManager(Client* clients, SharedQueue<Event*>& eventQueue,
     for(int i = 0; i < MAX_CLIENTS; i++)
     {
         PlayerComponent player;
-        player.client = clients[i];
+        player.client = &clients[i];
         player.connected = false;
         player.ready = false;
         player.lives = STARTING_LIVES;
@@ -69,23 +70,26 @@ void EventManager::Loop()
 {
     while (m_eventQueue->GetSize())
     {
-        event = m_eventQueue->Pop();
-        if(event != 0)
+        m_event = m_eventQueue->Pop();
+        if(m_event != 0)
         {
-            std::cout << event->ToNetworkable() << std::endl;
+            std::cout << m_event->ToNetworkable() << std::endl;
             SwitchEvent();
         }
-        delete event;
+        delete m_event;
     }
+    PlayerComponent player;
 }
 
 void EventManager::SwitchEvent()
 {
-    switch(event->GetType())
+    switch(m_event->GetType())
     {
     case EError:
         break;
     case EConnect:
+        ConnectPlayer();
+        std::cout << "works" << std::endl;
         break;
     case EDisconnect:
         break;
@@ -108,5 +112,24 @@ void EventManager::SwitchEvent()
 
 void EventManager::ConnectPlayer()
 {
+    m_event = dynamic_cast<ConnectEvent*>(m_event);
+    PlayerComponent player;
+    if(FindPlayerByClientId(m_event->clientId, player))
+        m_networkManager->MessageClient(player.client->socketId, m_event->ToNetworkable());
+    std::cout << "sent: " << m_event->ToNetworkable() << std::endl;
+}
 
+bool EventManager::FindPlayerByClientId(const int& clientId, PlayerComponent& player)
+{
+    CheckpointList<PlayerComponent>::Node<PlayerComponent>* pit = m_players->GetNodeHead();
+    while(pit->data.client->id != clientId && pit)
+    {
+        if(pit->data.client->id)
+        {
+            player = pit->data;
+            return true;
+        }
+        pit = m_players->GetNextNode(&*pit);
+    }
+    return false;
 }

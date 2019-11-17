@@ -15,11 +15,7 @@ void ActionManager::Loop()
 	if (m_actionQueue->GetSize())
 	{
 		Action* a = m_actionQueue->Pop();
-		if(a != 0)
-		{
-			std::cout << a->ToNetworkable() << std::endl;
-			SwitchAction(a);
-		}
+		if(a != 0) SwitchAction(a);
 		delete a;
 	}
 }
@@ -45,7 +41,6 @@ void ActionManager::SwitchAction(Action* action)
 
 void ActionManager::HandleError(Action* action)
 {
-	std::cout << "bahahahahhaa" << std::endl;
 }
 
 void ActionManager::ConnectClient(Action* action)
@@ -107,7 +102,6 @@ void ActionManager::RelayToEventManager(Action * action)
 		{
 			if (m_clients->token == action->sessionToken)
 			{
-				std::cout << "miaow" << std::endl;
 				GameAction* a = dynamic_cast<GameAction*>(action);
 				Event* e = CreateGameEvent(a->clientId, Split(a->gameEvent, (int)a->gameEvent.length()));
 				m_eventQueue->Push(e);
@@ -115,7 +109,6 @@ void ActionManager::RelayToEventManager(Action * action)
 			}
 			else
 			{
-				std::cout << "woof" << std::endl;
 				Action* e = CreateErrorAction(action->socketId, action->clientId, AGameAction, NEWrongSessionToken);
 				m_actionQueue->Push(e);
 				return;

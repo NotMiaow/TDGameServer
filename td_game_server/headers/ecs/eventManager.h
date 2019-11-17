@@ -20,24 +20,30 @@
 #include "motorComponent.h"
 #include "transformComponent.h"
 
+//Networking
+#include "networkManager.h"
+
 class EventManager
 {
 public:
     EventManager() { }
-    EventManager(Client* clients, SharedQueue<Event*>& eventQueue, CheckpointList<PlayerComponent>& players, CheckpointList<MotorComponent>& motors, 
+    EventManager(NetworkManager* networkManger, Client* clients, SharedQueue<Event*>& eventQueue, CheckpointList<PlayerComponent>& players, CheckpointList<MotorComponent>& motors, 
                 CheckpointList<TransformComponent>& transforms);
     ~EventManager();
     void Loop();
 private:
     void SwitchEvent();
     void ConnectPlayer();
+    bool FindPlayerByClientId(const int& clientId, PlayerComponent& player);
 private:
-    Event* event;
+    Event* m_event;
     SharedQueue<Event*>* m_eventQueue;
 
    	CheckpointList<PlayerComponent>* m_players;
    	CheckpointList<MotorComponent>* m_motors;
 	CheckpointList<TransformComponent>* m_transforms;
+
+    NetworkManager* m_networkManager;
 };
 
 #endif

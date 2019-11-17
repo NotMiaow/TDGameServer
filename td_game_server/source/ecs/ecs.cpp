@@ -1,6 +1,6 @@
 #include "ecs.h"
 
-ECS::ECS(NetworkManager* networkmanager, SharedQueue<Event*>& eventQueue, Client* clients)
+ECS::ECS(NetworkManager* networkManager, SharedQueue<Event*>& eventQueue, Client* clients)
 {
     //Components
     m_players = CheckpointList<PlayerComponent>();
@@ -8,7 +8,7 @@ ECS::ECS(NetworkManager* networkmanager, SharedQueue<Event*>& eventQueue, Client
     m_transforms = CheckpointList<TransformComponent>();
 
     //Event manager
-    m_eventManager = EventManager(clients, eventQueue, m_players, m_motors, m_transforms);
+    m_eventManager = EventManager(networkManager, clients, eventQueue, m_players, m_motors, m_transforms);
 
     //Systems
     m_timeSystem = TimeSystem();
