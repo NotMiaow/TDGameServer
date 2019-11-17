@@ -27,12 +27,12 @@ void Logic::ProcessActions(const int& threadID)
 	{
 		if (m_actionQueue->GetSize())
 		{
-			Action* a = m_actionQueue->Front();
+			Action* a = m_actionQueue->Pop();
 			if(a != 0)
 			{
+				std::cout << a->ToNetworkable() << std::endl;
 				SwitchAction(a);
-				m_actionQueue->Pop();
-			}
+			} 
 		}
 	}
 }

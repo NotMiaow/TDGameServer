@@ -68,8 +68,9 @@ void NetworkManager::AcceptConnection(sockaddr_in& address)
 			if (m_socketActive[i])
 				continue;
 
+
 			int addrlen = sizeof(address);
-			if((m_clientSockets[i] = accept(m_listeningSocket, (sockaddr*)&address, (socklen_t*)&addrlen)) < 0)
+			if((m_clientSockets[i] = accept(m_listeningSocket, (struct sockaddr*)&address, (socklen_t*)&addrlen)) < 0)
 			{
 				i--;
 				continue;

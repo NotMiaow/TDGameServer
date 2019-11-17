@@ -11,10 +11,10 @@
 #include "cst.h"
 #include "action.h"
 #include "event.h"
+#include "actionTranslator.h"
 #include "eventTranslator.h"
 #include "actionLanguage.h"
 #include "shared_queue.h"
-#include "networkManager.h"
 
 #include "eventManager.h"
 
@@ -32,13 +32,17 @@ public:
 	void DisconnectClient(Action* action);
 	void RelayToEventManager(Action* action);
 private:
+	//Terminate
 	std::shared_future<void> m_serverFuture;
 	std::atomic<bool> m_alive;
 	std::thread m_terminateThread;
+
+	//Processing actions
 	std::thread m_threads[PROCESSING_THREADS_COUNT];
-	SharedQueue<Action*>* m_actionQueue;
-	NetworkManager* m_networkManager;
 	Client* m_clients;
+	SharedQueue<Action*>* m_actionQueue;
+
+	//Creating events
 	SharedQueue<Event*>* m_eventQueue;
 };
 

@@ -94,6 +94,11 @@ template<typename T>
 inline T SharedQueue<T>::Pop()
 {
     m_mutex.lock();
+    if(m_size == 0)
+    {
+        m_mutex.unlock();
+        return nullptr;
+    }
     m_size--;
     m_front++;
     m_mutex.unlock();

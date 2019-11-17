@@ -34,7 +34,7 @@ void ECS::Loop()
     while(m_alive)
     {
         m_timeSystem.Loop();
-        m_movementSystem.Loop();
+//        m_movementSystem.Loop();
 
         //Kill server from within ecs
         //*m_serverAlive = false;

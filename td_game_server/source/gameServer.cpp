@@ -7,8 +7,8 @@ GameServer::GameServer(const int& gameServerPort, Client* clients)
 	m_futureObj = m_exitSignal.get_future();
 	
 	m_actionQueue = SharedQueue<Action*>();
-	m_networkManager = new NetworkManager(std::move(m_futureObj), gameServerPort, m_actionQueue);
 	m_eventQueue = SharedQueue<Event*>();
+	m_networkManager = new NetworkManager(std::move(m_futureObj), gameServerPort, m_actionQueue);
 	m_ecs = new ECS(m_networkManager, m_eventQueue, clients, std::move(m_futureObj), std::ref(m_alive));
 	m_logic = new Logic(std::move(m_futureObj), clients, m_actionQueue, m_eventQueue);
 
