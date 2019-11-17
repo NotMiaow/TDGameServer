@@ -4,23 +4,38 @@
 #include <iostream>
 #include <math.h>
 
+//Paths
 #include "vector2.h"
 #include "queue.h"
 
-#include "motorComponent.h"
-#include "transformComponent.h"
+//Events
+#include "eventLanguage.h"
+#include "event.h"
+#include "shared_queue.h"
 
 #include "checkpointList.h"
+//Components
+#include "client.h"
+#include "playerComponent.h"
+#include "motorComponent.h"
+#include "transformComponent.h"
 
 class EventManager
 {
 public:
     EventManager() { }
-    EventManager(CheckpointList<MotorComponent>& motors, CheckpointList<TransformComponent>& transforms);
+    EventManager(Client* clients, SharedQueue<Event*>& eventQueue, CheckpointList<PlayerComponent>& players, CheckpointList<MotorComponent>& motors, 
+                CheckpointList<TransformComponent>& transforms);
     ~EventManager();
+    void Loop();
 private:
+    void SwitchEvent();
+    void ConnectPlayer();
+private:
+    Event* event;
+    SharedQueue<Event*>* m_eventQueue;
 
-private:
+   	CheckpointList<PlayerComponent>* m_players;
    	CheckpointList<MotorComponent>* m_motors;
 	CheckpointList<TransformComponent>* m_transforms;
 };

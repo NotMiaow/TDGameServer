@@ -19,6 +19,7 @@ const int SPAWN_SIZE = 4;
 const int GRID_SIZE_X = 11;
 const int GRID_SIZE_Y = 11;
 const int DESPAWN_SIZE = 4;
+const int STARTING_LIVES = 20;
 const int STARTING_GOLD = 10000;
 const int POST_GAME_DURATION = 1; //Milliseconds
 

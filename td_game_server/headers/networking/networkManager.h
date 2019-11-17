@@ -1,6 +1,8 @@
 #ifndef NETWORK_MANAGER_H__
 #define NETWORK_MANAGER_H__
 
+#include <iostream>
+
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -24,6 +26,7 @@ public:
 	NetworkManager() { }
 	NetworkManager(std::shared_future<void>&& serverFuture, const int serverPort, SharedQueue<Action*>& actionQueue);
 	~NetworkManager();
+private:
 	bool SetUpClientEnvironment(const int serverPort);
 	void AcceptConnection(sockaddr_in& address);
 	void ListenToClient(const int& socketId);
@@ -31,7 +34,6 @@ public:
 	void MessageClient(const int& socketId, std::string message);
 	void KickClient(const int& socketId);
 	void BroadCast(std::string& message);
-
 private:
 	std::shared_future<void> m_serverFuture;
 	std::atomic<bool> m_alive;

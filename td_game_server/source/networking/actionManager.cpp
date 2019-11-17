@@ -1,49 +1,30 @@
-#include "logic.h"
+#include "actionManager.h"
 
-Logic::Logic(std::shared_future<void>&& serverFuture, Client* clients, SharedQueue<Action*>& actionQueue, SharedQueue<Event*>& eventQueue) {
-	m_serverFuture = serverFuture;
-	m_alive = true;
-
+ActionManager::ActionManager(Client* clients, SharedQueue<Action*>& actionQueue, SharedQueue<Event*>& eventQueue) {
+	m_clients = clients;
 	m_actionQueue = &actionQueue;
 	m_eventQueue = &eventQueue;
-
-	m_clients = clients;
-
-    m_terminateThread = std::thread(&Logic::WaitForTerminate, this);
-	for (int i = 0; i < PROCESSING_THREADS_COUNT; i++)
-		m_threads[i] = std::thread(&Logic::ProcessActions, this, i);
 }
 
-Logic::~Logic()
+ActionManager::~ActionManager()
 {
-    m_terminateThread.join();
-	for (int i = 0; i < PROCESSING_THREADS_COUNT; i++)
-		m_threads[i].join();
 }
 
-void Logic::ProcessActions(const int& threadID)
+void ActionManager::Loop()
 {
-	while (m_alive)
+	if (m_actionQueue->GetSize())
 	{
-		if (m_actionQueue->GetSize())
+		Action* a = m_actionQueue->Pop();
+		if(a != 0)
 		{
-			Action* a = m_actionQueue->Pop();
-			if(a != 0)
-			{
-				std::cout << a->ToNetworkable() << std::endl;
-				SwitchAction(a);
-			} 
+			std::cout << a->ToNetworkable() << std::endl;
+			SwitchAction(a);
 		}
+		delete a;
 	}
 }
 
-void Logic::WaitForTerminate()
-{
-    while(m_serverFuture.wait_for(std::chrono::milliseconds(1000)) == std::future_status::timeout) { }
-    m_alive = false;
-}
-
-void Logic::SwitchAction(Action* action)
+void ActionManager::SwitchAction(Action* action)
 {
 	switch (action->GetType())
 	{
@@ -62,11 +43,12 @@ void Logic::SwitchAction(Action* action)
 	}
 }
 
-void Logic::HandleError(Action* action)
+void ActionManager::HandleError(Action* action)
 {
+	std::cout << "bahahahahhaa" << std::endl;
 }
 
-void Logic::ConnectClient(Action* action)
+void ActionManager::ConnectClient(Action* action)
 {
 	ConnectAction* a = dynamic_cast<ConnectAction*>(action);
 	for (int i = 0; i < MAX_CLIENTS; i++)
@@ -102,7 +84,7 @@ void Logic::ConnectClient(Action* action)
 	}
 }
 
-void Logic::DisconnectClient(Action* action)
+void ActionManager::DisconnectClient(Action* action)
 {
 	DisconnectAction* a = dynamic_cast<DisconnectAction*>(action);
 	for (int i = 0; i < MAX_CLIENTS; i++)
@@ -117,7 +99,7 @@ void Logic::DisconnectClient(Action* action)
 	}
 }
 
-void Logic::RelayToEventManager(Action * action)
+void ActionManager::RelayToEventManager(Action * action)
 {
 	for (int i = 0; i < MAX_CLIENTS; i++)
 	{
@@ -125,6 +107,7 @@ void Logic::RelayToEventManager(Action * action)
 		{
 			if (m_clients->token == action->sessionToken)
 			{
+				std::cout << "miaow" << std::endl;
 				GameAction* a = dynamic_cast<GameAction*>(action);
 				Event* e = CreateGameEvent(a->clientId, Split(a->gameEvent, (int)a->gameEvent.length()));
 				m_eventQueue->Push(e);
@@ -132,6 +115,7 @@ void Logic::RelayToEventManager(Action * action)
 			}
 			else
 			{
+				std::cout << "woof" << std::endl;
 				Action* e = CreateErrorAction(action->socketId, action->clientId, AGameAction, NEWrongSessionToken);
 				m_actionQueue->Push(e);
 				return;

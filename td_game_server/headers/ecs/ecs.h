@@ -16,6 +16,7 @@
 #include "networkManager.h"
 #include "eventManager.h"
 
+#include "playerComponent.h"
 #include "motorComponent.h"
 #include "transformComponent.h"
 
@@ -26,24 +27,26 @@ class ECS
 {
 public:
 	ECS() {}
-	ECS(NetworkManager* networkmanager, SharedQueue<Event*>& eventQueue, Client* clients, std::shared_future<void>&& serverFuture, std::atomic<bool>& serverAlive);
+	ECS(NetworkManager* networkmanager, SharedQueue<Event*>& eventQueue, Client* clients);
 	~ECS();
-	void Loop();
+	bool Loop();
+private:
 	void WaitForTerminate();
 private:
-	std::shared_future<void> m_serverFuture;
-	std::atomic<bool>* m_serverAlive;
-	std::atomic<bool> m_alive;
-	std::thread m_terminateThread;
-	std::thread m_mainLoopThread;
-	//components
+	//Components
+	CheckpointList<PlayerComponent> m_players;
 	CheckpointList<MotorComponent> m_motors;
 	CheckpointList<TransformComponent> m_transforms;
-	//systems
+	
+	//Systems
 	TimeSystem m_timeSystem;
 	MovementSystem m_movementSystem;
-	//event handler
+	
+	//Event mang
 	EventManager m_eventManager;
+
+	//Networking
+	NetworkManager* m_networkManager;
 };
 
 

@@ -4,6 +4,7 @@ NetworkManager::NetworkManager(std::shared_future<void>&& serverFuture, const in
 {
 	m_serverFuture = serverFuture;
     m_alive = true;
+	m_terminateThread = std::thread(&NetworkManager::WaitForTerminate, this);
 
 	m_clientsPort = serverPort;
 	m_actionQueue = &actionQueue;
@@ -11,14 +12,19 @@ NetworkManager::NetworkManager(std::shared_future<void>&& serverFuture, const in
 	for (int i = 0; i < MAX_CLIENTS; i++)
 		m_socketActive[i] = false;
 
-	if (!SetUpClientEnvironment(serverPort))
-		exit(EXIT_FAILURE);
+	SetUpClientEnvironment(serverPort);
 }
 
 NetworkManager::~NetworkManager()
 {
-	if (m_listeningThread.joinable())
-		m_listeningThread.join();
+	close(m_listeningSocket);
+	m_listeningThread.join();
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(m_clientThreads[i].joinable())
+			m_clientThreads[i].join();
+	}
+	m_terminateThread.join();
 }
 
 
@@ -68,7 +74,6 @@ void NetworkManager::AcceptConnection(sockaddr_in& address)
 			if (m_socketActive[i])
 				continue;
 
-
 			int addrlen = sizeof(address);
 			if((m_clientSockets[i] = accept(m_listeningSocket, (struct sockaddr*)&address, (socklen_t*)&addrlen)) < 0)
 			{
@@ -79,15 +84,9 @@ void NetworkManager::AcceptConnection(sockaddr_in& address)
 			m_socketActive[i] = true;
 			if (m_clientThreads[i].joinable()) m_clientThreads[i].join();
 			m_clientThreads[i] = std::thread(&NetworkManager::ListenToClient, this, i);
+			i = m_alive ? i : MAX_CLIENTS;
 		}
 	}
-
-	for (int i = 0; i < MAX_CLIENTS; i++)
-	{
-		m_clientThreads[i].join();
-		close(m_clientSockets[i]);
-	}
-	close(m_listeningSocket);
 }
 
 void NetworkManager::ListenToClient(const int& socketId)
@@ -106,10 +105,12 @@ void NetworkManager::ListenToClient(const int& socketId)
 		else {
 			Action* disconnectAction = CreateDisconnectAction(socketId);
 			m_actionQueue->Push(disconnectAction);
+			close(m_clientSockets[socketId]);
 			m_socketActive[socketId] = false;
 			return;
 		}
 	} while (iResult > 0 && m_alive);
+	close(m_clientSockets[socketId]);
 	m_socketActive[socketId] = false;
 
 	Action* disconnectAction = CreateDisconnectAction(socketId);
@@ -119,7 +120,7 @@ void NetworkManager::ListenToClient(const int& socketId)
 
 void NetworkManager::WaitForTerminate()
 {
-    while(m_serverFuture.wait_for(std::chrono::milliseconds(1000)) == std::future_status::timeout) { }
+    while(m_serverFuture.wait_for(std::chrono::milliseconds(1000)) == std::future_status::timeout);
     m_alive = false;
 }
 

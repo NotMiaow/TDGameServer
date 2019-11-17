@@ -9,7 +9,7 @@
 #include "action.h"
 #include "cst.h"
 #include "networkManager.h"
-#include "logic.h"
+#include "actionManager.h"
 #include "ecs.h"
 #include "client.h"
 
@@ -19,21 +19,24 @@ public:
 	GameServer(const int& gameServerPort, Client* clients);
 	GameServer();
 	~GameServer();
-	void WaitForTerminate();
+	void Loop();
 	void Stop();
 private:
+	void WaitForTerminate();
+private:
 	int m_serverPort;
+	Client* m_clients;
 
 	std::atomic<bool> m_alive;
-	std::thread m_terminateThread;
-
 	std::promise<void> m_exitSignal;
 	std::shared_future<void> m_futureObj;
+	std::thread m_terminateThread;
+	std::thread m_mainLoopThread;
 
 	SharedQueue<Event*> m_eventQueue;
 	SharedQueue<Action*> m_actionQueue;
 	NetworkManager* m_networkManager;
 	ECS* m_ecs;
-	Logic* m_logic;
+	ActionManager* m_actionManager;
 };
 #endif

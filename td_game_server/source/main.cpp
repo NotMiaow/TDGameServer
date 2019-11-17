@@ -6,7 +6,7 @@
 
 int main()
 {
-	Client clients[MAX_CLIENTS];
+	Client* clients = new Client[MAX_CLIENTS];
 	for (int i = 0; i < MAX_CLIENTS; i++)
 	{
 		clients[i].socketId = -1;

@@ -5,7 +5,7 @@
 
 struct PlayerComponent
 {
-	Client* client;
+	Client client;
 	bool connected;
 	bool ready;
 	int lives;

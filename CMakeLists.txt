@@ -2,18 +2,18 @@ cmake_minimum_required(VERSION 3.16)
 project(td_game_server)
 
 #include headers
-include_directories(${PROJECT_BINARY_DIR}/_lib/queue)
 include_directories(${PROJECT_BINARY_DIR}/_lib/vector2)
+include_directories(${PROJECT_BINARY_DIR}/_lib/queue)
 include_directories(${PROJECT_BINARY_DIR}/_lib/path)
 include_directories(${PROJECT_BINARY_DIR}/_lib/basic_lib)
 include_directories(${PROJECT_BINARY_DIR}/_lib/checkpoint_list)
-include_directories(${PROJECT_BINARY_DIR}/td_game_server/headers)
-include_directories(${PROJECT_BINARY_DIR}/td_game_server/headers/networking)
-include_directories(${PROJECT_BINARY_DIR}/td_game_server/headers/networking/actions)
 include_directories(${PROJECT_BINARY_DIR}/td_game_server/headers/networking/events)
+include_directories(${PROJECT_BINARY_DIR}/td_game_server/headers/networking/actions)
+include_directories(${PROJECT_BINARY_DIR}/td_game_server/headers/networking)
 include_directories(${PROJECT_BINARY_DIR}/td_game_server/headers/ecs/components)
 include_directories(${PROJECT_BINARY_DIR}/td_game_server/headers/ecs/systems)
 include_directories(${PROJECT_BINARY_DIR}/td_game_server/headers/ecs)
+include_directories(${PROJECT_BINARY_DIR}/td_game_server/headers)
 
 #add source directories
 add_subdirectory(td_game_server/source/ecs/systems)
