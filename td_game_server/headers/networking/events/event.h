@@ -86,16 +86,16 @@ struct ReadyUpEvent : public Event
 	EventType GetType() const { return EReadyUp; }
 	std::string ToNetworkable() const
 	{
-		CheckpointList<ResourceComponent>::Node<ResourceComponent>* node = resources->GetNodeHead();
+//		CheckpointList<ResourceComponent>::Node<ResourceComponent>* node = resources->GetNodeHead();
 		std::ostringstream os;
-		os << "{" << EReadyUp << ";" << playerPosition << ";";
-		while (node != NULL)
-		{
-			os << node->data.gold << ((node->next != NULL) ? ";" : "");
-			node = resources->GetNextNode(&*node);
-		}
+		os << "{" << EReadyUp << ";" << playerPosition;
+//		os << ";";
+//		while (node != NULL)
+//		{
+//			os << node->data.gold << ((node->next != NULL) ? ";" : "");
+//			node = resources->GetNextNode(&*node);
+//		}
 		os << "}";
-		std::cout << os.str() << std::endl;
 		return os.str();
 	}
 
@@ -198,7 +198,8 @@ struct SendUnitGroupEvent : public Event
 	EventType GetType() const { return ESendUnitGroup; }
 	std::string ToNetworkable() const
 	{
-		return "";	//This event is recieve only
+		std::ostringstream os;
+		os << "{" << ESendUnitGroup << "}";
 	}
 
 	int unitType;

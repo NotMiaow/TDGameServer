@@ -85,6 +85,7 @@ inline void Queue<T>::Push(const T &element)
         T *data = new T[m_capacity];
         for (int i = 0; i < m_size; i++)
             data[m_capacity - 1 - i] = m_data[m_size - 1 - i];
+        delete m_data;
         m_data = data;
     }
     m_data[m_front] = element;

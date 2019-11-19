@@ -7,6 +7,7 @@
 #include <chrono>
 #include <future>
 
+#include "basicLib.h"
 #include "client.h"
 #include "cst.h"
 #include "action.h"

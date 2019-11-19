@@ -15,6 +15,7 @@ void ActionManager::Loop()
 	if (m_actionQueue->GetSize())
 	{
 		Action* a = m_actionQueue->Pop();
+		std::cout << a->ToNetworkable() << std::endl;
 		if(a != 0) SwitchAction(a);
 		delete a;
 	}
@@ -35,12 +36,14 @@ void ActionManager::SwitchAction(Action* action)
 		break;
 	case AGameAction:
 		RelayToEventManager(action);
+
 		break;
 	}
 }
 
 void ActionManager::HandleError(Action* action)
 {
+	std::cout << "error" << action->ToNetworkable() << std::endl;
 }
 
 void ActionManager::ConnectClient(Action* action)

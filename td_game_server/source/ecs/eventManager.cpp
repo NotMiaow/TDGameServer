@@ -73,12 +73,10 @@ void EventManager::Loop()
         m_event = m_eventQueue->Pop();
         if(m_event != 0)
         {
-            std::cout << m_event->ToNetworkable() << std::endl;
             SwitchEvent();
         }
         delete m_event;
     }
-    PlayerComponent player;
 }
 
 void EventManager::SwitchEvent()
@@ -89,11 +87,11 @@ void EventManager::SwitchEvent()
         break;
     case EConnect:
         ConnectPlayer();
-        std::cout << "works" << std::endl;
         break;
     case EDisconnect:
         break;
     case EReadyUp:
+        ReadyUpPlayer();
         break;
     case ESpawnUnitGroup:
         break;
@@ -113,23 +111,33 @@ void EventManager::SwitchEvent()
 void EventManager::ConnectPlayer()
 {
     m_event = dynamic_cast<ConnectEvent*>(m_event);
-    PlayerComponent player;
-    if(FindPlayerByClientId(m_event->clientId, player))
-        m_networkManager->MessageClient(player.client->socketId, m_event->ToNetworkable());
-    std::cout << "sent: " << m_event->ToNetworkable() << std::endl;
+    CheckpointList<PlayerComponent>::Node<PlayerComponent>* pit = FindPlayerByClientId(m_event->clientId);
+
+    if(pit)
+    {
+        pit->data.connected = true;
+        m_networkManager->MessageClient(pit->data.client->socketId, m_event->ToNetworkable());
+    }
 }
 
-bool EventManager::FindPlayerByClientId(const int& clientId, PlayerComponent& player)
+void EventManager::ReadyUpPlayer()
+{
+    m_event = dynamic_cast<ReadyUpEvent*>(m_event);
+    CheckpointList<PlayerComponent>::Node<PlayerComponent>* pit = FindPlayerByClientId(m_event->clientId);
+    if(pit)
+    {
+        pit->data.ready = true;
+//      SEND RESOURCES
+//        ((ReadyUpEvent*)m_event)->resources
+        m_networkManager->MessageClient(pit->data.client->socketId, m_event->ToNetworkable());
+        return;
+    }
+}
+
+CheckpointList<PlayerComponent>::Node<PlayerComponent>* EventManager::FindPlayerByClientId(const int& clientId)
 {
     CheckpointList<PlayerComponent>::Node<PlayerComponent>* pit = m_players->GetNodeHead();
     while(pit->data.client->id != clientId && pit)
-    {
-        if(pit->data.client->id)
-        {
-            player = pit->data;
-            return true;
-        }
         pit = m_players->GetNextNode(&*pit);
-    }
-    return false;
+    return pit;
 }

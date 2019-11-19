@@ -34,7 +34,8 @@ public:
 private:
     void SwitchEvent();
     void ConnectPlayer();
-    bool FindPlayerByClientId(const int& clientId, PlayerComponent& player);
+    void ReadyUpPlayer();
+    CheckpointList<PlayerComponent>::Node<PlayerComponent>* FindPlayerByClientId(const int& clientId);
 private:
     Event* m_event;
     SharedQueue<Event*>* m_eventQueue;

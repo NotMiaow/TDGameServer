@@ -91,7 +91,7 @@ struct GameAction : public Action
 	std::string ToNetworkable() const
 	{
 		std::ostringstream os;
-		os << "{" << AGameAction << ";" << gameEvent << "}" <<std::endl;
+		os << "{" << AGameAction << ";" << gameEvent << "}";
 		return os.str();
 	}
 
