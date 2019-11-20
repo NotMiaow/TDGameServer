@@ -1,5 +1,5 @@
-#ifndef NETWORKING_LANGUAGE_H__
-#define NETWORKING_LANGUAGE_H__
+#ifndef ACTION_LANGUAGE_H__
+#define ACTION_LANGUAGE_H__
 
 enum ActionType
 {

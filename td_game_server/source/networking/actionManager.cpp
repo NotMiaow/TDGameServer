@@ -15,7 +15,7 @@ void ActionManager::Loop()
 	if (m_actionQueue->GetSize())
 	{
 		Action* a = m_actionQueue->Pop();
-		std::cout << a->ToNetworkable() << std::endl;
+		std::cout << a->ToDebuggable() << std::endl;
 		if(a != 0) SwitchAction(a);
 		delete a;
 	}
@@ -43,7 +43,7 @@ void ActionManager::SwitchAction(Action* action)
 
 void ActionManager::HandleError(Action* action)
 {
-	std::cout << "error" << action->ToNetworkable() << std::endl;
+	std::cout << "error" << action->ToDebuggable() << std::endl;
 }
 
 void ActionManager::ConnectClient(Action* action)

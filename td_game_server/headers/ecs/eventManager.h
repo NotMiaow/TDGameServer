@@ -17,6 +17,7 @@
 //Components
 #include "client.h"
 #include "playerComponent.h"
+#include "resourceComponent.h"
 #include "motorComponent.h"
 #include "transformComponent.h"
 
@@ -27,20 +28,22 @@ class EventManager
 {
 public:
     EventManager() { }
-    EventManager(NetworkManager* networkManger, Client* clients, SharedQueue<Event*>& eventQueue, CheckpointList<PlayerComponent>& players, CheckpointList<MotorComponent>& motors, 
-                CheckpointList<TransformComponent>& transforms);
+    EventManager(NetworkManager* networkManager, Client* clients, SharedQueue<Event*>& eventQueue, CheckpointList<PlayerComponent>& players, 
+                CheckpointList<ResourceComponent>& resources, CheckpointList<MotorComponent>& motors, CheckpointList<TransformComponent>& transforms);
     ~EventManager();
     void Loop();
 private:
     void SwitchEvent();
     void ConnectPlayer();
     void ReadyUpPlayer();
-    CheckpointList<PlayerComponent>::Node<PlayerComponent>* FindPlayerByClientId(const int& clientId);
+    const int FindPlayerByClientId(const int &clientId, CheckpointList<PlayerComponent>::Node<PlayerComponent> * pit);
+    const int GetPlayerResources(const int& clientId, CheckpointList<ResourceComponent>::Node<ResourceComponent>* rit);
 private:
     Event* m_event;
     SharedQueue<Event*>* m_eventQueue;
 
    	CheckpointList<PlayerComponent>* m_players;
+    CheckpointList<ResourceComponent>* m_resources;
    	CheckpointList<MotorComponent>* m_motors;
 	CheckpointList<TransformComponent>* m_transforms;
 

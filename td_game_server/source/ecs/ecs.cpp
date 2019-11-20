@@ -4,11 +4,12 @@ ECS::ECS(NetworkManager* networkManager, SharedQueue<Event*>& eventQueue, Client
 {
     //Components
     m_players = CheckpointList<PlayerComponent>();
+    m_resources = CheckpointList<ResourceComponent>();
     m_motors = CheckpointList<MotorComponent>();
     m_transforms = CheckpointList<TransformComponent>();
 
     //Event manager
-    m_eventManager = EventManager(networkManager, clients, eventQueue, m_players, m_motors, m_transforms);
+    m_eventManager = EventManager(networkManager, clients, eventQueue, m_players, m_resources, m_motors, m_transforms);
 
     //Systems
     m_timeSystem = TimeSystem();

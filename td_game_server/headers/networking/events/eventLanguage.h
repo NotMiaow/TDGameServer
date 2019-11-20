@@ -1,5 +1,5 @@
-#ifndef GAME_LANGUAGE_H__
-#define	GAME_LANGUAGE_H__
+#ifndef EVENT_LANGUAGE_H__
+#define	EVENT_LANGUAGE_H__
 
 enum EventType
 {

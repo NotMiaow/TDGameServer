@@ -17,6 +17,7 @@
 #include "eventManager.h"
 
 #include "playerComponent.h"
+#include "resourceComponent.h"
 #include "motorComponent.h"
 #include "transformComponent.h"
 
@@ -35,6 +36,7 @@ private:
 private:
 	//Components
 	CheckpointList<PlayerComponent> m_players;
+	CheckpointList<ResourceComponent> m_resources;
 	CheckpointList<MotorComponent> m_motors;
 	CheckpointList<TransformComponent> m_transforms;
 	

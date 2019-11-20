@@ -13,7 +13,7 @@
 struct Action
 {
 	virtual ActionType GetType() const = 0;
-	virtual std::string ToNetworkable() const = 0;
+	virtual std::string ToDebuggable() const = 0;
 
 	int clientId;
 	int socketId;
@@ -31,7 +31,7 @@ struct ErrorAction : public Action
 		this->neType = neType;
 	}
 	ActionType GetType() const { return AError; }
-	std::string ToNetworkable() const
+	std::string ToDebuggable() const
 	{
 		std::ostringstream os;
 		os << "{" << AError << ";" << aType << ";" << neType << ";" << clientId << ";" << socketId << "}";
@@ -51,7 +51,7 @@ struct ConnectAction : public Action
 		this->sessionToken = sessionToken;
 	}
 	ActionType GetType() const { return AConnect; }
-	std::string ToNetworkable() const
+	std::string ToDebuggable() const
 	{
 		std::ostringstream os;
 		os << "{" << AConnect << "}";
@@ -68,7 +68,7 @@ struct DisconnectAction : public Action
 		this->sessionToken = "";
 	}
 	ActionType GetType() const { return ADisconnect; }
-	std::string ToNetworkable() const
+	std::string ToDebuggable() const
 	{
 		std::ostringstream os;
 		os << "{" << ADisconnect << ";" << reason << "}";
@@ -88,7 +88,7 @@ struct GameAction : public Action
 		this->gameEvent = gameEvent;
 	}
 	ActionType GetType() const { return AGameAction; }
-	std::string ToNetworkable() const
+	std::string ToDebuggable() const
 	{
 		std::ostringstream os;
 		os << "{" << AGameAction << ";" << gameEvent << "}";

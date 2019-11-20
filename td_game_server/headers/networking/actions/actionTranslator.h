@@ -1,5 +1,5 @@
-#ifndef NETWORKING_TRANSLATOR_H__
-#define NETWORKING_TRANSLATOR_H__
+#ifndef ACTION_TRANSLATOR_H__
+#define ACTION_TRANSLATOR_H__
 
 #include <iostream>
 #include <string>

@@ -86,16 +86,14 @@ struct ReadyUpEvent : public Event
 	EventType GetType() const { return EReadyUp; }
 	std::string ToNetworkable() const
 	{
-//		CheckpointList<ResourceComponent>::Node<ResourceComponent>* node = resources->GetNodeHead();
+		CheckpointList<ResourceComponent>::Node<ResourceComponent>* rit = resources->GetNodeHead();
 		std::ostringstream os;
-		os << "{" << EReadyUp << ";" << playerPosition;
-//		os << ";";
-//		while (node != NULL)
-//		{
-//			os << node->data.gold << ((node->next != NULL) ? ";" : "");
-//			node = resources->GetNextNode(&*node);
-//		}
-		os << "}";
+		os << "{" << EReadyUp << ";" << playerPosition << ";";
+		while (rit)
+		{
+			os << rit->data.gold << ";" << rit->data.income << (rit->next ? ";" : "}");
+			rit = resources->GetNextNode(&*rit);
+		}
 		return os.str();
 	}
 

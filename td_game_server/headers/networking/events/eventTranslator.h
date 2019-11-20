@@ -1,5 +1,5 @@
-#ifndef	GAME_TRANSLATOR_H__
-#define GAME_TRANSLATOR_H__
+#ifndef	EVENT_TRANSLATOR_H__
+#define EVENT_TRANSLATOR_H__
 
 #include <string>
 #include <vector>
