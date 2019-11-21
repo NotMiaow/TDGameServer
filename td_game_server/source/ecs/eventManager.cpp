@@ -1,13 +1,13 @@
 #include "eventManager.h"
 
 EventManager::EventManager(NetworkManager *networkManager, Client *clients, SharedQueue<Event *> &eventQueue, CheckpointList<PlayerComponent> &players,
-                           CheckpointList<ResourceComponent> &resources, CheckpointList<MotorComponent> &motors, CheckpointList<TransformComponent> &transforms)
+                           CheckpointList<BankComponent> &banks, CheckpointList<MotorComponent> &motors, CheckpointList<TransformComponent> &transforms)
 {
     m_networkManager = networkManager;
     m_eventQueue = &eventQueue;
 
     m_players = &players;
-    m_resources = &resources;
+    m_banks = &banks;
     m_motors = &motors;
     m_transforms = &transforms;
 
@@ -23,13 +23,14 @@ EventManager::EventManager(NetworkManager *networkManager, Client *clients, Shar
         pit = m_players->InsertAfterNode(player, pit);
     }
 
-    CheckpointList<ResourceComponent>::Node<ResourceComponent> *rit = m_resources->GetNodeHead();
+    //Seed resources
+    CheckpointList<BankComponent>::Node<BankComponent> *bit = m_banks->GetNodeHead();
     for (int i = 0; i < MAX_CLIENTS; i++)
     {
-        ResourceComponent resource;
-        resource.gold = STARTING_GOLD;
-        resource.income = STARTING_INCOME;
-        rit = m_resources->InsertAfterNode(resource, rit);
+        BankComponent bank;
+        bank.gold = STARTING_GOLD;
+        bank.income = STARTING_INCOME;
+        bit = m_banks->InsertAfterNode(bank, bit);
     }
 
     //Create Motor
@@ -79,8 +80,7 @@ void EventManager::Loop()
     while (m_eventQueue->GetSize())
     {
         m_event = m_eventQueue->Pop();
-        if (m_event != 0)
-            SwitchEvent();
+        if (m_event != 0) SwitchEvent();
         delete m_event;
     }
 }
@@ -95,6 +95,7 @@ void EventManager::SwitchEvent()
         ConnectPlayer();
         break;
     case EDisconnect:
+        DisconnectPlayer();
         break;
     case EReadyUp:
         ReadyUpPlayer();
@@ -116,31 +117,32 @@ void EventManager::SwitchEvent()
 
 void EventManager::ConnectPlayer()
 {
-    m_event = dynamic_cast<ConnectEvent *>(m_event);
+    ConnectEvent* event = dynamic_cast<ConnectEvent *>(m_event);
     CheckpointList<PlayerComponent>::Node<PlayerComponent> *pit = m_players->GetNodeHead();
-    FindPlayerByClientId(m_event->clientId, pit);
+    FindPlayerByClientId(event->clientId, pit);
 
-    if (pit != 0)
-    {
-        pit->data.connected = true;
-        m_networkManager->MessageClient(pit->data.client->socketId, m_event->ToNetworkable());
-    }
+    pit->data.connected = true;
+    pit->data.ready = false;
+    m_networkManager->MessageClient(pit->data.client->socketId, event->ToNetworkable());
+}
+
+void EventManager::DisconnectPlayer()
+{
+
 }
 
 void EventManager::ReadyUpPlayer()
 {
-    m_event = dynamic_cast<ReadyUpEvent *>(m_event);
+    ReadyUpEvent* event = dynamic_cast<ReadyUpEvent *>(m_event);
     CheckpointList<PlayerComponent>::Node<PlayerComponent> *pit = m_players->GetNodeHead();
-    const int playerPosition = FindPlayerByClientId(m_event->clientId, pit);
+    const int playerPosition = FindPlayerByClientId(event->clientId, pit);
 
-    if (pit)
-    {
-        pit->data.ready = true;
-        ((ReadyUpEvent *)m_event)->playerPosition = playerPosition;
-        ((ReadyUpEvent *)m_event)->resources = m_resources;
-        m_networkManager->MessageClient(pit->data.client->socketId, m_event->ToNetworkable());
-        return;
-    }
+    pit->data.ready = true;
+    event->playerPosition = playerPosition;
+    event->players = m_players;        
+    event->banks = m_banks;
+    m_networkManager->MessageClient(pit->data.client->socketId, event->ToNetworkable());
+    return;
 }
 
 const int EventManager::FindPlayerByClientId(const int &clientId, CheckpointList<PlayerComponent>::Node<PlayerComponent> * pit = 0)
@@ -155,14 +157,14 @@ const int EventManager::FindPlayerByClientId(const int &clientId, CheckpointList
     return playerPosition;
 }
 
-const int EventManager::GetPlayerResources(const int& clientId, CheckpointList<ResourceComponent>::Node<ResourceComponent>* rit)
+const int EventManager::GetPlayerBank(const int& clientId, CheckpointList<BankComponent>::Node<BankComponent>* bit)
 {
     const int playerPosition = FindPlayerByClientId(clientId, 0);
     int pos = 0;
     while (pos < playerPosition)
     {
         pos++;
-        rit = m_resources->GetNextNode(&*rit);
+        bit = m_banks->GetNextNode(&*bit);
     }
     return playerPosition;
 }

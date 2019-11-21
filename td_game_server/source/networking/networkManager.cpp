@@ -122,6 +122,33 @@ void NetworkManager::WaitForTerminate()
 {
     while(m_serverFuture.wait_for(std::chrono::milliseconds(1000)) == std::future_status::timeout);
     m_alive = false;
+
+	//Connect to itself to move pass the accept bind in m_listeningThread
+	//Allowing to join() in the destructor
+	int serverStopSocket = 0;
+	sockaddr_in serverAddress;
+	if ((serverStopSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+		return;
+	serverAddress.sin_family = AF_INET;
+	serverAddress.sin_port = htons(m_clientsPort);
+	if (inet_pton(AF_INET, "127.0.0.1", &serverAddress.sin_addr) <= 0)
+		return;
+	if(connect(serverStopSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0)
+		return;
+
+	for(int i = 0; i < MAX_CLIENTS; i ++)
+	{
+		if(m_socketActive[i])
+		{
+			DisconnectEvent disconnectEvent(0, RServerClosing);
+			MessageClient(i, disconnectEvent.ToNetworkable());
+    		MessageClient(i, "");
+			shutdown(m_clientSockets[i], SHUT_RDWR);
+			close(m_clientSockets[i]);
+			m_socketActive[i] = false;
+		}	
+	}
+	close(serverStopSocket);
 }
 
 void NetworkManager::MessageClient(const int& socketId, std::string message)

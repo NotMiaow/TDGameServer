@@ -6,7 +6,8 @@ enum DisconnectReason
 	RNewLogin,
 	RKicked,
 	RNaturalClose,
-	RTimeout
+	RTimeout,
+	RServerClosing
 };
 
 #endif

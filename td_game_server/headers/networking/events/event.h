@@ -7,13 +7,19 @@
 #include <string>
 #include <sstream>
 
-#include "checkpointList.h"
-#include "resourceComponent.h"
-#include "basicLib.h"
+//Networking
 #include "sharedLanguage.h"
 #include "eventLanguage.h"
-#include "queue.h"
+
+//Libraries
+#include "basicLib.h"
 #include "vector2.h"
+#include "queue.h"
+
+#include "checkpointList.h"
+//Components
+#include "playerComponent.h"
+#include "bankComponent.h"
 
 struct Event
 {
@@ -62,7 +68,6 @@ struct DisconnectEvent : public Event
 {
 	DisconnectEvent(const int& clientId, DisconnectReason reason = RKicked)
 	{
-
 		this->clientId = clientId;
 		this->reason = reason;
 	}
@@ -86,19 +91,23 @@ struct ReadyUpEvent : public Event
 	EventType GetType() const { return EReadyUp; }
 	std::string ToNetworkable() const
 	{
-		CheckpointList<ResourceComponent>::Node<ResourceComponent>* rit = resources->GetNodeHead();
+		CheckpointList<PlayerComponent>::Node<PlayerComponent>* pit = players->GetNodeHead();
+		CheckpointList<BankComponent>::Node<BankComponent>* bit = banks->GetNodeHead();
 		std::ostringstream os;
 		os << "{" << EReadyUp << ";" << playerPosition << ";";
-		while (rit)
+		while (pit->next)
 		{
-			os << rit->data.gold << ";" << rit->data.income << (rit->next ? ";" : "}");
-			rit = resources->GetNextNode(&*rit);
+			os << pit->data.connected << ";" << pit->data.ready << ";" << pit->data.lives << ";" << bit->data.gold << ";" << bit->data.income << ";";
+			pit = players->GetNextNode(&*pit);
+			bit = banks->GetNextNode(&*bit);
 		}
+		os << pit->data.connected << ";" << pit->data.ready << ";" << pit->data.lives << ";" << bit->data.gold << ";" << bit->data.income << "}";
 		return os.str();
 	}
 
 	int playerPosition;
-	CheckpointList<ResourceComponent>* resources;
+	CheckpointList<PlayerComponent>* players;
+	CheckpointList<BankComponent>* banks;
 };
 
 struct SpawnUnitGroupEvent : public Event

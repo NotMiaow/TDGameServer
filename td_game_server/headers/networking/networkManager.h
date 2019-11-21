@@ -4,10 +4,11 @@
 #include <iostream>
 
 #include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include <arpa/inet.h> 
 #include <thread>
 #include <chrono>
 #include <future>
@@ -18,6 +19,7 @@
 #include "actionLanguage.h"
 #include "action.h"
 #include "actionTranslator.h"
+#include "event.h"
 #include "cst.h"
 
 class NetworkManager
