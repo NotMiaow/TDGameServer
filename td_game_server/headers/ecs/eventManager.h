@@ -28,9 +28,9 @@ class EventManager
 {
 public:
     EventManager() { }
-    EventManager(NetworkManager* networkManager, Client* clients, SharedQueue<Event*>& eventQueue, CheckpointList<PlayerComponent>& players, 
-                CheckpointList<BankComponent>& resources, CheckpointList<MotorComponent>& motors, CheckpointList<TransformComponent>& transforms);
     ~EventManager();
+    void Init(Client* clients, NetworkManager& networkManager, SharedQueue<Event*>& eventQueue, CheckpointList<PlayerComponent>& players, 
+                CheckpointList<BankComponent>& resources, CheckpointList<MotorComponent>& motors, CheckpointList<TransformComponent>& transforms);
     void Loop();
 private:
     void SwitchEvent();

@@ -1,31 +1,30 @@
 #include "ecs.h"
 
-ECS::ECS(NetworkManager* networkManager, SharedQueue<Event*>& eventQueue, Client* clients)
+ECS::~ECS()
+{
+
+}
+
+void ECS::Init(SharedQueue<Event*>& eventQueue, CheckpointList<PlayerComponent>& players, CheckpointList<BankComponent>& banks,
+                CheckpointList<MotorComponent>& motors, CheckpointList<TransformComponent>& transforms)
 {
     //Components
-    m_players = CheckpointList<PlayerComponent>();
-    m_banks = CheckpointList<BankComponent>();
-    m_motors = CheckpointList<MotorComponent>();
-    m_transforms = CheckpointList<TransformComponent>();
+    m_players = &players;
+    m_banks = &banks;
+    m_motors = &motors;
+    m_transforms = &transforms;
 
-    //Event manager
-    m_eventManager = EventManager(networkManager, clients, eventQueue, m_players, m_banks, m_motors, m_transforms);
+    m_eventQueue = &eventQueue;
 
     //Systems
     m_timeSystem = TimeSystem();
-    m_movementSystem = MovementSystem(m_timeSystem, m_motors, m_transforms);
-}
-
-ECS::~ECS()
-{
+    m_movementSystem = MovementSystem(*m_motors, *m_transforms);
 }
 
 bool ECS::Loop()
 {
     m_timeSystem.Loop();
 //        m_movementSystem.Loop();
-    m_eventManager.Loop();
-    
     
     //Kill server from within ecs
 //    return false;

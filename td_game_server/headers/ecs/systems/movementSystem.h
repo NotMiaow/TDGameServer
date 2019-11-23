@@ -19,12 +19,12 @@ class MovementSystem
 {
 public:
 	MovementSystem();
-	MovementSystem(TimeSystem& timeSystem, CheckpointList<MotorComponent>& motors, CheckpointList<TransformComponent>& transforms);
+	MovementSystem(CheckpointList<MotorComponent>& motors, CheckpointList<TransformComponent>& transforms);
 	~MovementSystem();
-	void Loop();
+	void Loop(const float& deltaTime);
 private:
-	void SwitchBehaviour(MotorComponent& motor, TransformComponent& transforms);
-	void MoveMotor(MotorComponent& motor, TransformComponent& transforms);
+	void SwitchBehaviour(const float& deltaTime, MotorComponent& motor, TransformComponent& transforms);
+	void MoveMotor(const float& deltaTime, MotorComponent& motor, TransformComponent& transforms);
 private:
 	TimeSystem* m_timeSystem;
 

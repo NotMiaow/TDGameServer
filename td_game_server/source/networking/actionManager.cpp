@@ -1,13 +1,14 @@
 #include "actionManager.h"
 
-ActionManager::ActionManager(Client* clients, SharedQueue<Action*>& actionQueue, SharedQueue<Event*>& eventQueue) {
+ActionManager::~ActionManager()
+{
+
+}
+
+void ActionManager::Init(Client* clients, SharedQueue<Action*>& actionQueue, SharedQueue<Event*>& eventQueue) {
 	m_clients = clients;
 	m_actionQueue = &actionQueue;
 	m_eventQueue = &eventQueue;
-}
-
-ActionManager::~ActionManager()
-{
 }
 
 void ActionManager::Loop()

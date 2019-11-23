@@ -2,17 +2,20 @@
 
 GameServer::GameServer(const int& gameServerPort, Client* clients)
 {
+	//Terminate
 	m_alive = true;
 	m_serverPort = gameServerPort;
 	m_futureObj = m_exitSignal.get_future();
 	m_terminateThread = std::thread(&GameServer::WaitForTerminate, this);
 	
+	//Networking
 	m_clients = clients;
-	m_actionQueue = SharedQueue<Action*>();
-	m_eventQueue = SharedQueue<Event*>();
-	m_networkManager = new NetworkManager(std::move(m_futureObj), gameServerPort, m_actionQueue);
-	m_actionManager = new ActionManager(clients, m_actionQueue, m_eventQueue);
-	m_ecs = new ECS(m_networkManager, m_eventQueue, clients);
+	m_networkManager.Init(std::move(m_futureObj), gameServerPort, m_actionQueue);
+	m_actionManager.Init(clients, m_actionQueue, m_eventQueue);
+	
+	//ECS
+	m_eventManager.Init(m_clients, m_networkManager, m_eventQueue, m_players, m_banks, m_motors, m_transforms);	
+	m_ecs.Init(m_eventQueue, m_players, m_banks, m_motors, m_transforms);
 
     //Main loop
     m_mainLoopThread = std::thread(&GameServer::Loop, this);
@@ -27,9 +30,6 @@ GameServer::~GameServer()
 {
 	m_mainLoopThread.join();
 	m_terminateThread.join();
-	delete m_networkManager;
-	delete m_actionManager;
-	delete m_ecs;
 	delete[] m_clients;
 }
 
@@ -37,8 +37,9 @@ void GameServer::Loop()
 {
 	while(m_alive)
 	{
-		m_actionManager->Loop();
-		if(!m_ecs->Loop()) Stop();
+		m_actionManager.Loop();
+		m_eventManager.Loop();
+		if(!m_ecs.Loop()) Stop();
 	}
 }
 

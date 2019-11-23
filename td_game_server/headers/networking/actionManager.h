@@ -23,8 +23,8 @@ class ActionManager
 {
 public:
 	ActionManager() { }
-	ActionManager(Client* clients, SharedQueue<Action*>& actionQueue, SharedQueue<Event*>& eventQueue);
 	~ActionManager();
+	void Init(Client* clients, SharedQueue<Action*>& actionQueue, SharedQueue<Event*>& eventQueue);
 	void Loop();
 private:
 	void SwitchAction(Action* action);

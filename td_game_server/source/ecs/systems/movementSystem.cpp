@@ -4,11 +4,8 @@ MovementSystem::MovementSystem()
 {
 }
 
-MovementSystem::MovementSystem(TimeSystem& timeSystem, CheckpointList<MotorComponent>& motors, CheckpointList<TransformComponent>& transforms)
+MovementSystem::MovementSystem(CheckpointList<MotorComponent>& motors, CheckpointList<TransformComponent>& transforms)
 {
-	//Time
-	m_timeSystem = &timeSystem;
-
 	//Components
 	m_motors = &motors;
 	m_transforms = &transforms;
@@ -19,26 +16,26 @@ MovementSystem::~MovementSystem()
 
 }
 
-void MovementSystem::Loop()
+void MovementSystem::Loop(const float& deltaTime)
 {
 	CheckpointList<MotorComponent>::Node<MotorComponent>* mNode = m_motors->GetNodeHead();
 	CheckpointList<TransformComponent>::Node<TransformComponent>* tNode = m_transforms->GetNodeHead();
 	while (mNode != NULL)
 	{
-		SwitchBehaviour(mNode->data, tNode->data);
+		SwitchBehaviour(deltaTime, mNode->data, tNode->data);
 		mNode = m_motors->GetNextNode(&*mNode);
 		tNode = m_transforms->GetNextNode(&*tNode);
 	}
 }
 
-void MovementSystem::SwitchBehaviour(MotorComponent& motor, TransformComponent& transform)
+void MovementSystem::SwitchBehaviour(const float& deltaTime, MotorComponent& motor, TransformComponent& transform)
 {
 	if (motor.path.GetSize())
 	{
 		switch (motor.behaviour)
 		{
 		case Move:
-			MoveMotor(motor, transform);
+			MoveMotor(deltaTime, motor, transform);
 			break;
 		case Rage:
 			break;
@@ -50,11 +47,11 @@ void MovementSystem::SwitchBehaviour(MotorComponent& motor, TransformComponent& 
 	}
 }
 
-void MovementSystem::MoveMotor(MotorComponent& motor, TransformComponent& transform)
+void MovementSystem::MoveMotor(const float& deltaTime, MotorComponent& motor, TransformComponent& transform)
 {
 	//Translate motor
-	transform.position.x += transform.normalizedTarget.x * motor.curSpeed * (float)m_timeSystem->DeltaTime();
-	transform.position.y += transform.normalizedTarget.y * motor.curSpeed * (float)m_timeSystem->DeltaTime();
+	transform.position.x += transform.normalizedTarget.x * motor.curSpeed * deltaTime;
+	transform.position.y += transform.normalizedTarget.y * motor.curSpeed * deltaTime;
 
 	Vector2 targetPosition = motor.path.Front();
 	std::cout << transform.position.y << ":" << transform.position.x << std::endl;

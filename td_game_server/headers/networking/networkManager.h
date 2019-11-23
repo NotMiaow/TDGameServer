@@ -26,8 +26,8 @@ class NetworkManager
 {
 public:
 	NetworkManager() { }
-	NetworkManager(std::shared_future<void>&& serverFuture, const int serverPort, SharedQueue<Action*>& actionQueue);
 	~NetworkManager();
+	void Init(std::shared_future<void>&& serverFuture, const int serverPort, SharedQueue<Action*>& actionQueue);
 	void MessageClient(const int& socketId, std::string message);
 	void KickClient(const int& socketId);
 	void BroadCast(std::string& message);

@@ -1,6 +1,18 @@
 #include "networkManager.h"
 
-NetworkManager::NetworkManager(std::shared_future<void>&& serverFuture, const int serverPort, SharedQueue<Action*>& actionQueue)
+NetworkManager::~NetworkManager()
+{
+	close(m_listeningSocket);
+	m_listeningThread.join();
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(m_clientThreads[i].joinable())
+			m_clientThreads[i].join();
+	}
+	m_terminateThread.join();
+}
+
+void NetworkManager::Init(std::shared_future<void>&& serverFuture, const int serverPort, SharedQueue<Action*>& actionQueue)
 {
 	m_serverFuture = serverFuture;
     m_alive = true;
@@ -14,19 +26,6 @@ NetworkManager::NetworkManager(std::shared_future<void>&& serverFuture, const in
 
 	SetUpClientEnvironment(serverPort);
 }
-
-NetworkManager::~NetworkManager()
-{
-	close(m_listeningSocket);
-	m_listeningThread.join();
-	for(int i = 0; i < MAX_CLIENTS; i++)
-	{
-		if(m_clientThreads[i].joinable())
-			m_clientThreads[i].join();
-	}
-	m_terminateThread.join();
-}
-
 
 bool NetworkManager::SetUpClientEnvironment(const int serverPort)
 {

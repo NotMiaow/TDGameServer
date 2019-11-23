@@ -1,9 +1,14 @@
 #include "eventManager.h"
 
-EventManager::EventManager(NetworkManager *networkManager, Client *clients, SharedQueue<Event *> &eventQueue, CheckpointList<PlayerComponent> &players,
+EventManager::~EventManager()
+{
+
+}
+
+void EventManager::Init(Client *clients, NetworkManager& networkManager, SharedQueue<Event *> &eventQueue, CheckpointList<PlayerComponent> &players,
                            CheckpointList<BankComponent> &banks, CheckpointList<MotorComponent> &motors, CheckpointList<TransformComponent> &transforms)
 {
-    m_networkManager = networkManager;
+    m_networkManager = &networkManager;
     m_eventQueue = &eventQueue;
 
     m_players = &players;
@@ -69,10 +74,6 @@ EventManager::EventManager(NetworkManager *networkManager, Client *clients, Shar
     //	transform.normalizedTarget.x = distanceX / distance;
     //	transform.normalizedTarget.y = distanceY / distance;
     //    m_transforms->InsertAfterNode(transform, m_transforms->GetNodeHead());
-}
-
-EventManager::~EventManager()
-{
 }
 
 void EventManager::Loop()

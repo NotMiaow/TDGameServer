@@ -28,27 +28,25 @@ class ECS
 {
 public:
 	ECS() {}
-	ECS(NetworkManager* networkManager, SharedQueue<Event*>& eventQueue, Client* clients);
 	~ECS();
+	void Init(SharedQueue<Event*>& eventQueue, CheckpointList<PlayerComponent>& players, CheckpointList<BankComponent>& banks,
+			CheckpointList<MotorComponent>& motors, CheckpointList<TransformComponent>& transforms);
 	bool Loop();
 private:
 	void WaitForTerminate();
 private:
 	//Components
-	CheckpointList<PlayerComponent> m_players;
-	CheckpointList<BankComponent> m_banks;
-	CheckpointList<MotorComponent> m_motors;
-	CheckpointList<TransformComponent> m_transforms;
+	CheckpointList<PlayerComponent>* m_players;
+	CheckpointList<BankComponent>* m_banks;
+	CheckpointList<MotorComponent>* m_motors;
+	CheckpointList<TransformComponent>* m_transforms;
 	
+	//Shared resources
+	SharedQueue<Event*>* m_eventQueue;
+
 	//Systems
 	TimeSystem m_timeSystem;
 	MovementSystem m_movementSystem;
-	
-	//Event mang
-	EventManager m_eventManager;
-
-	//Networking
-	NetworkManager* m_networkManager;
 };
 
 
