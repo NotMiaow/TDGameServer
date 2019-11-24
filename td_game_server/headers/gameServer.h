@@ -11,21 +11,23 @@
 #include "event.h"
 #include "action.h"
 
-//Networking
-#include "client.h"
-#include "actionManager.h"
-#include "networkManager.h"
-
+#include "checkpointList.h"
 //Components
 #include "playerComponent.h"
 #include "bankComponent.h"
+#include "offenseComponent.h"
 #include "motorComponent.h"
 #include "transformComponent.h"
 
 //Misc
 #include "cst.h"
-#include "eventManager.h"
 #include "ecs.h"
+#include "eventManager.h"
+
+//Networking
+#include "client.h"
+#include "actionManager.h"
+#include "networkManager.h"
 
 class GameServer
 {
@@ -36,6 +38,7 @@ public:
 	void Loop();
 	void Stop();
 private:
+	void InitialiseComponentDataStructure();
 	void WaitForTerminate();
 private:
 	//Terminate
@@ -58,6 +61,7 @@ private:
 	//Components
 	CheckpointList<PlayerComponent> m_players;
 	CheckpointList<BankComponent> m_banks;
+	CheckpointList<OffenseComponent> m_offenses;
 	CheckpointList<MotorComponent> m_motors;
 	CheckpointList<TransformComponent> m_transforms;
 

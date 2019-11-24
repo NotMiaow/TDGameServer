@@ -6,36 +6,45 @@ EventManager::~EventManager()
 }
 
 void EventManager::Init(Client *clients, NetworkManager& networkManager, SharedQueue<Event *> &eventQueue, CheckpointList<PlayerComponent> &players,
-                           CheckpointList<BankComponent> &banks, CheckpointList<MotorComponent> &motors, CheckpointList<TransformComponent> &transforms)
+                        CheckpointList<BankComponent> &banks, CheckpointList<OffenseComponent>& offenses, CheckpointList<MotorComponent> &motors,
+                        CheckpointList<TransformComponent> &transforms)
 {
     m_networkManager = &networkManager;
     m_eventQueue = &eventQueue;
 
     m_players = &players;
     m_banks = &banks;
+    m_offenses = &offenses;
     m_motors = &motors;
     m_transforms = &transforms;
 
-    //Seed players
-    CheckpointList<PlayerComponent>::Node<PlayerComponent> *pit = m_players->GetNodeHead();
-    for (int i = 0; i < MAX_CLIENTS; i++)
+    int cnt = 0;
     {
-        PlayerComponent player;
-        player.client = &clients[i];
-        player.connected = false;
-        player.ready = false;
-        player.lives = STARTING_LIVES;
-        pit = m_players->InsertAfterNode(player, pit);
+        //Seed players
+        TabNode<PlayerComponent> *tabIt = m_players->GetTabHead();
+        while(tabIt)
+        {
+            PlayerComponent player;
+            player.client = &clients[cnt];
+            player.connected = false;
+            player.ready = false;
+            player.lives = STARTING_LIVES;
+            m_players->InsertNode(player, tabIt->checkpointNode);
+            tabIt = m_players->GetNextTab(&*tabIt);
+            cnt++;
+        }
     }
-
-    //Seed resources
-    CheckpointList<BankComponent>::Node<BankComponent> *bit = m_banks->GetNodeHead();
-    for (int i = 0; i < MAX_CLIENTS; i++)
     {
-        BankComponent bank;
-        bank.gold = STARTING_GOLD;
-        bank.income = STARTING_INCOME;
-        bit = m_banks->InsertAfterNode(bank, bit);
+        //Seed resources
+        TabNode<BankComponent> *tabIt = m_banks->GetTabHead();
+        for (int i = 0; i < MAX_CLIENTS; i++)
+        {
+            BankComponent bank;
+            bank.gold = STARTING_GOLD;
+            bank.income = STARTING_INCOME;
+            m_banks->InsertNode(bank, tabIt->checkpointNode);
+            tabIt = m_banks->GetNextTab(&*tabIt);
+        }
     }
 
     //Create Motor
@@ -108,6 +117,7 @@ void EventManager::SwitchEvent()
     case ERage:
         break;
     case EBuildTower:
+        BuildTower();
         break;
     case ESellTower:
         break;
@@ -119,7 +129,7 @@ void EventManager::SwitchEvent()
 void EventManager::ConnectPlayer()
 {
     ConnectEvent* event = dynamic_cast<ConnectEvent *>(m_event);
-    CheckpointList<PlayerComponent>::Node<PlayerComponent> *pit = m_players->GetNodeHead();
+    DataNode<PlayerComponent> *pit = m_players->GetNodeHead();
     FindPlayerByClientId(event->clientId, pit);
 
     pit->data.connected = true;
@@ -135,7 +145,7 @@ void EventManager::DisconnectPlayer()
 void EventManager::ReadyUpPlayer()
 {
     ReadyUpEvent* event = dynamic_cast<ReadyUpEvent *>(m_event);
-    CheckpointList<PlayerComponent>::Node<PlayerComponent> *pit = m_players->GetNodeHead();
+    DataNode<PlayerComponent> *pit = m_players->GetNodeHead();
     const int playerPosition = FindPlayerByClientId(event->clientId, pit);
 
     pit->data.ready = true;
@@ -146,11 +156,44 @@ void EventManager::ReadyUpPlayer()
     return;
 }
 
-const int EventManager::FindPlayerByClientId(const int &clientId, CheckpointList<PlayerComponent>::Node<PlayerComponent> * pit = 0)
+void EventManager::BuildTower()
+{
+    BuildTowerEvent* event = dynamic_cast<BuildTowerEvent*>(m_event);
+
+    CheckpointNode<OffenseComponent>* offenseIt = m_offenses->GetTabHead()->checkpointNode;
+    CheckpointNode<TransformComponent>* transformIt = m_transforms->GetTabHead()->checkpointNode;
+    const int socketId = GetPlayerTowers(event->clientId, offenseIt, transformIt);
+    //GET PLAYER BANK
+
+    DataNode<TransformComponent>* nodeIt = transformIt->node;
+    while (nodeIt && nodeIt != transformIt->next->node)
+    {
+        if(nodeIt->data.position.x == event->position.x && nodeIt->data.position.y == event->position.y)
+            return;
+        nodeIt = m_transforms->GetNextNode(&*nodeIt);
+    }
+
+    //Create tower's OffenseComponent
+    OffenseComponent offense;
+    offense.baseAttackRate = 1;
+    offense.baseDamage = 1;
+    offense.curAttackRate = offense.baseAttackRate;
+    offense.curDamage = offense.baseDamage;
+    //Create tower's TransformComponent
+    TransformComponent transform;
+    transform.position.x = event->position.x;
+    transform.position.y = event->position.y;
+
+    m_offenses->InsertNode(offense, offenseIt);
+    m_transforms->InsertNode(transform, transformIt);
+    m_networkManager->MessageClient(socketId, event->ToNetworkable());
+}
+
+const int EventManager::FindPlayerByClientId(const int &clientId, DataNode<PlayerComponent> * pit = 0)
 {
     int playerPosition = 0;
     if(pit == 0) pit = m_players->GetNodeHead();
-    while (pit->data.client->id != clientId && pit != 0)
+    while (pit->data.client->id != clientId)
     {
         playerPosition++;
         pit = m_players->GetNextNode(&*pit);
@@ -158,15 +201,28 @@ const int EventManager::FindPlayerByClientId(const int &clientId, CheckpointList
     return playerPosition;
 }
 
-const int EventManager::GetPlayerBank(const int& clientId, CheckpointList<BankComponent>::Node<BankComponent>* bit)
+const int EventManager::GetPlayerTowers(const int& clientId, CheckpointNode<OffenseComponent>* offenseIt, CheckpointNode<TransformComponent>* transformIt)
 {
-    const int playerPosition = FindPlayerByClientId(clientId, 0);
-    int pos = 0;
-    while (pos < playerPosition)
+    DataNode<PlayerComponent>* playerIt = m_players->GetNodeHead();
+    TabNode<OffenseComponent>* offenseTabIt = m_offenses->GetTabHead();
+    TabNode<TransformComponent>* transformTabIt = m_transforms->GetTabHead();
+    const int playerPosition = FindPlayerByClientId(clientId, playerIt);
+    int cnt = 0;
+    
+    //Get tabs
+    while (cnt++ < playerPosition)
     {
-        pos++;
-        bit = m_banks->GetNextNode(&*bit);
+        offenseTabIt = m_offenses->GetNextTab(&*offenseTabIt);
+        transformTabIt = m_transforms->GetNextTab(&*transformTabIt);
     }
-    return playerPosition;
-}
 
+    //Get offense checkpoint
+    cnt = 0; offenseIt = offenseTabIt->checkpointNode;
+    while (cnt++ < O_TOWER) offenseIt = m_offenses->GetNextCheckpoint(offenseIt);
+    //Get transform checkpoint
+    cnt = 0; transformIt = transformTabIt->checkpointNode;
+    while (cnt++ < T_TOWER) transformIt = m_transforms->GetNextCheckpoint(transformIt);
+
+    //Return player components checkpoint iterators and socket id
+    return playerIt->data.client->socketId;
+}

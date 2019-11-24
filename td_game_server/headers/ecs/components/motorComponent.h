@@ -9,6 +9,7 @@ struct MotorComponent
 {
 	Behaviour behaviour;
 	Queue<Vector2> path;
+    Vector2 normalizedTarget;
 	float baseSpeed;
 	float curSpeed;
 };

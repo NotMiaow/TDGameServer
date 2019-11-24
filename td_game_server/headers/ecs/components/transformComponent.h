@@ -6,7 +6,6 @@
 struct TransformComponent
 {
     Vector2 position;
-    Vector2 normalizedTarget;
     //Vector3 scale;
 };
 

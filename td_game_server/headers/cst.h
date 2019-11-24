@@ -24,6 +24,10 @@ const int STARTING_GOLD = 10000;    //temporarily high, helps debugging
 const int STARTING_INCOME = 80;
 const int POST_GAME_DURATION = 1; //Milliseconds
 
+//ECS constants
+enum TransformsCheckpoint { T_TOWER = 0, T_UNIT_GROUP };
+enum OffensesCheckpoint { O_TOWER = 0, O_UNIT_GROUP };
+
 //Debugging constants
 //These constants are used to fake that a clients were assigned to this game server
 //Making this a test environment

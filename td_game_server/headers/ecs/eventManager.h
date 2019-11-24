@@ -18,6 +18,7 @@
 #include "client.h"
 #include "playerComponent.h"
 #include "bankComponent.h"
+#include "offenseComponent.h"
 #include "motorComponent.h"
 #include "transformComponent.h"
 
@@ -30,21 +31,25 @@ public:
     EventManager() { }
     ~EventManager();
     void Init(Client* clients, NetworkManager& networkManager, SharedQueue<Event*>& eventQueue, CheckpointList<PlayerComponent>& players, 
-                CheckpointList<BankComponent>& resources, CheckpointList<MotorComponent>& motors, CheckpointList<TransformComponent>& transforms);
+                CheckpointList<BankComponent>& banks, CheckpointList<OffenseComponent>& offenses, CheckpointList<MotorComponent>& motors,
+                CheckpointList<TransformComponent>& transforms);
     void Loop();
 private:
     void SwitchEvent();
     void ConnectPlayer();
     void DisconnectPlayer();
     void ReadyUpPlayer();
-    const int FindPlayerByClientId(const int &clientId, CheckpointList<PlayerComponent>::Node<PlayerComponent> * pit);
-    const int GetPlayerBank(const int& clientId, CheckpointList<BankComponent>::Node<BankComponent>* bit);
+    void BuildTower();
+    const int FindPlayerByClientId(const int &clientId, DataNode<PlayerComponent> * pit);
+    const int GetPlayerTowers(const int& clientId, CheckpointNode<OffenseComponent>* oit, CheckpointNode<TransformComponent>* tit);
+
 private:
     Event* m_event;
     SharedQueue<Event*>* m_eventQueue;
 
    	CheckpointList<PlayerComponent>* m_players;
     CheckpointList<BankComponent>* m_banks;
+    CheckpointList<OffenseComponent>* m_offenses;
    	CheckpointList<MotorComponent>* m_motors;
 	CheckpointList<TransformComponent>* m_transforms;
 

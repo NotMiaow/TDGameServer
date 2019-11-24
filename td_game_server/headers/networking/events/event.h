@@ -91,8 +91,8 @@ struct ReadyUpEvent : public Event
 	EventType GetType() const { return EReadyUp; }
 	std::string ToNetworkable() const
 	{
-		CheckpointList<PlayerComponent>::Node<PlayerComponent>* pit = players->GetNodeHead();
-		CheckpointList<BankComponent>::Node<BankComponent>* bit = banks->GetNodeHead();
+		DataNode<PlayerComponent>* pit = players->GetNodeHead();
+		DataNode<BankComponent>* bit = banks->GetNodeHead();
 		std::ostringstream os;
 		os << "{" << EReadyUp << ";" << playerPosition << ";";
 		while (pit->next)

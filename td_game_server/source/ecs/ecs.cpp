@@ -6,11 +6,12 @@ ECS::~ECS()
 }
 
 void ECS::Init(SharedQueue<Event*>& eventQueue, CheckpointList<PlayerComponent>& players, CheckpointList<BankComponent>& banks,
-                CheckpointList<MotorComponent>& motors, CheckpointList<TransformComponent>& transforms)
+                CheckpointList<OffenseComponent>& offenses, CheckpointList<MotorComponent>& motors, CheckpointList<TransformComponent>& transforms)
 {
     //Components
     m_players = &players;
     m_banks = &banks;
+    m_offenses = &offenses;
     m_motors = &motors;
     m_transforms = &transforms;
 
