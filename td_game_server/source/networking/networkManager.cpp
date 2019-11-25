@@ -91,15 +91,45 @@ void NetworkManager::AcceptConnection(sockaddr_in& address)
 void NetworkManager::ListenToClient(const int& socketId)
 {
 	int iResult = 0;
-	char recvbuf[DEFAULT_BUFLEN];
-	int recvbuflen = DEFAULT_BUFLEN;
-
+	char recvbuf[BUFFER_LENGTH];
+	int recvbuflen = BUFFER_LENGTH;
+	std::string message = "";
+	int messageLength = 0;
 	do {
 		iResult = read(m_clientSockets[socketId], recvbuf, recvbuflen);
 		if (iResult > 0)
 		{
-			Action* action = CreateAction(socketId, Split(recvbuf, iResult));
-			m_actionQueue->Push(action);
+			//Convert to string
+			for(int i = 0; i < iResult; i++)
+				message += recvbuf[i];
+			
+			//Get message length if not already
+			if(messageLength == 0)
+			{
+				messageLength = GetMessageLength(message);
+				if(messageLength == 0)
+				{
+					close(m_clientSockets[socketId]);
+					m_socketActive[socketId] = false;
+					continue;
+				}
+			}
+			//Done receiving
+			if(message.length() == messageLength)
+			{
+				Action* action = CreateAction(socketId, Split(message, message.length()));
+				m_actionQueue->Push(action);
+				message = "";
+				messageLength = 0;
+			}
+			//Error
+			else if(message.length() > messageLength)
+			{
+				close(m_clientSockets[socketId]);
+				m_socketActive[socketId] = false;
+				message = "";
+				messageLength = 0;
+			}
 		}
 		else {
 			Action* disconnectAction = CreateDisconnectAction(socketId);
@@ -115,6 +145,59 @@ void NetworkManager::ListenToClient(const int& socketId)
 	Action* disconnectAction = CreateDisconnectAction(socketId);
 	m_actionQueue->Push(disconnectAction);
 	iResult = shutdown(m_clientSockets[socketId], SHUT_WR);
+}
+
+int NetworkManager::GetMessageLength(std::string& cutMessage)
+{
+	int iMessageLength = 0;
+	std::string sMessageLength = "";
+	int pos = cutMessage.find('{');
+	if(pos != std::string::npos)
+	{
+		sMessageLength = cutMessage.substr(0,pos);
+		iMessageLength = std::stoi(sMessageLength);
+		cutMessage = cutMessage.substr(pos);
+	}
+	return iMessageLength;
+}
+
+void NetworkManager::MessageClient(const int& socketId, std::string message)
+{
+	//Add message length to message
+	message = std::to_string(message.length()) + message;
+
+	//Send message
+	std::string cutMessage;
+	int i;
+	for(i = 0; i + BUFFER_LENGTH < message.length(); i += BUFFER_LENGTH)
+	{
+		cutMessage = message.substr(i, BUFFER_LENGTH);
+		if(!SendString(socketId, cutMessage))
+			return;
+	}	
+	if(i < message.length())
+	{
+		cutMessage = message.substr(i);
+		if(!SendString(socketId, cutMessage))
+			return;
+	}	
+}
+
+bool NetworkManager::SendString(const int& socketId, std::string cutMessage)
+{
+	int iSendResult = send(m_clientSockets[socketId], cutMessage.c_str(), (int)cutMessage.length(), 0);
+	if (iSendResult <= 0)
+	{
+		KickClient(socketId);
+		return false;
+	}
+	return true;
+}
+
+void NetworkManager::KickClient(const int & socketId)
+{
+	close(m_clientSockets[socketId]);
+	m_socketActive[socketId] = false;
 }
 
 void NetworkManager::WaitForTerminate()
@@ -148,16 +231,4 @@ void NetworkManager::WaitForTerminate()
 		}	
 	}
 	close(serverStopSocket);
-}
-
-void NetworkManager::MessageClient(const int& socketId, std::string message)
-{
-	int iSendResult = send(m_clientSockets[socketId], message.c_str(), (int)message.length(), 0);
-	if (iSendResult <= 0) KickClient(socketId);
-}
-
-void NetworkManager::KickClient(const int & socketId)
-{
-	close(m_clientSockets[socketId]);
-	m_socketActive[socketId] = false;
 }

@@ -130,8 +130,8 @@ struct NewPathEvent : public Event
 	{
 		std::ostringstream os;
 		os << "{" << ENewPath << ";" << motorPosition << ";";
-		Queue<Vector2>::Iterator<Vector2> it(path);
-		while(!it.End()) os << "(" << path.Get(it).y << ":" << path.Get(it).x << ")" << (it.Next() == it.capacity ? "" : ";");
+		//APPEND POSITIONS
+		std::cout << "APPEND POSITIONS TO NewPathEvent.ToNetworkable()" << std::endl;
 		os << "}";
 		return os.str();
 	}
@@ -156,9 +156,9 @@ struct RageEvent : public Event
 
 struct BuildTowerEvent : public Event
 {
+	BuildTowerEvent();
 	BuildTowerEvent(const int&  clientId, const int& towerType, const Vector2& position)
 	{
-
 		this->clientId = clientId;
 		this->towerType = towerType;
 		this->position = position;
@@ -167,10 +167,11 @@ struct BuildTowerEvent : public Event
 	std::string ToNetworkable() const
 	{
 		std::ostringstream os;
-		os << "{" << EBuildTower << ";" << towerType << ";(" << position.y << ":" << position.x << ")}";
+		os << "{" << EBuildTower << ";" << remainingGold << ";" << towerType << ";(" << position.y << ":" << position.x << ")}";
 		return os.str();
 	}
 
+	int remainingGold;
 	int towerType;
 	Vector2 position;
 };

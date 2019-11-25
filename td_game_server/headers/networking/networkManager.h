@@ -2,7 +2,6 @@
 #define NETWORK_MANAGER_H__
 
 #include <iostream>
-
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,6 +14,7 @@
 
 #define DEFAULT_BUFLEN 512
 
+#include "queue.h"
 #include "shared_queue.h"
 #include "actionLanguage.h"
 #include "action.h"
@@ -35,6 +35,8 @@ private:
 	bool SetUpClientEnvironment(const int serverPort);
 	void AcceptConnection(sockaddr_in& address);
 	void ListenToClient(const int& socketId);
+	int GetMessageLength(std::string& cutMessage);
+	bool SendString(const int& socketId, std::string cutMessage);
 	void WaitForTerminate();
 private:
 	std::shared_future<void> m_serverFuture;

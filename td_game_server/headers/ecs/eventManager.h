@@ -25,6 +25,9 @@
 //Networking
 #include "networkManager.h"
 
+//Misc
+#include "gameEnums.h"
+
 class EventManager
 {
 public:
@@ -41,7 +44,7 @@ private:
     void ReadyUpPlayer();
     void BuildTower();
     const int FindPlayerByClientId(const int &clientId, DataNode<PlayerComponent> * pit);
-    const int GetPlayerTowers(const int& clientId, CheckpointNode<OffenseComponent>* oit, CheckpointNode<TransformComponent>* tit);
+    void GetPlayerTowers(const int& playerPosition, CheckpointNode<OffenseComponent>* oit, CheckpointNode<TransformComponent>* tit);
 
 private:
     Event* m_event;
