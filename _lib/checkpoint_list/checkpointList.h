@@ -9,10 +9,19 @@ template<class T>
 class CheckpointList
 {
 public:
+	class Iterator
+	{
+	public:
+		Iterator(DataNode<T>* start, DataNode<T>* end) : m_curNode(start), m_endNode(end) { }
+		void operator++(int) { m_curNode = m_curNode->next; }
+		T& Get() { return m_curNode->data; } 
+		bool End() { return m_curNode == m_endNode; }
+	private:
+		DataNode<T>* m_curNode;
+		DataNode<T>* m_endNode;
+	};
 	CheckpointList();
-//	CheckpointList(CheckpointList<T>& source);
 	~CheckpointList();
-	int GetSize() const;
 	DataNode<T>* GetNodeHead() const;
 	TabNode<T>* GetTabHead() const;
 	DataNode<T>* GetNextNode(const DataNode<T>* node) const;
@@ -37,66 +46,6 @@ inline CheckpointList<T>::CheckpointList()
 	m_checkpointHead = 0;
 	m_tabHead = 0;
 }
-
-//template<class T>
-//inline CheckpointList<T>::CheckpointList(CheckpointList<T>& source)
-//{
-//	m_head = 0;
-//	m_tabHead = 0;
-//	
-//	Node<T>* nodeIt = source.m_head;
-//	while(nodeIt != 0)
-//	{
-//		//Duplicate nodes
-//		Node<T>* temp = new Node<T>(nodeIt->data, nodeIt->next);
-//		nodeIt->next = temp;
-//		nodeIt = temp->next;
-//	}
-//	TabNode<T>* tabIt = source.m_tabHead;
-//	while(tabIt != 0)
-//	{
-//		CheckpointNode<T>* checkpointIt = tabIt->checkpointNode;
-//		while(checkpointIt != 0)
-//		{
-//			//Duplicate checkpointNodes and mimic their node pointers
-//			CheckpointNode<T>* temp = new CheckpointNode<T>(checkpointIt->node->next, checkpointIt->next);
-//			checkpointIt->next = temp;
-//			checkpointIt = temp->next;
-//		}
-//		//Duplicate tabNodes and mimic their checkPointNode pointers
-//		TabNode<T>* temp = new TabNode<T>(tabIt->next);
-//		temp->checkpointNode = tabIt->checkpointNode->next;
-//		tabIt->next = temp;
-//		tabIt = temp->next;
-//	}
-//	//Separate lists
-//	nodeIt = source.m_head;
-//	m_head = nodeIt->next;
-//	while(nodeIt != 0)
-//	{
-//		Node<T>* temp = nodeIt->next;
-//		nodeIt->next = temp->next;
-//		temp->next = temp->next == 0 ? 0 :temp->next->next;
-//		nodeIt = nodeIt->next;
-//	}
-//	tabIt = source.m_tabHead;
-//	m_tabHead = tabIt->next;
-//	while(tabIt != 0)
-//	{
-//		CheckpointNode<T>* checkpointIt = tabIt->checkpointNode;
-//		while(checkpointIt != 0)
-//		{
-//			CheckpointNode<T>* temp = checkpointIt->next;
-//			checkpointIt->next = temp->next;
-//			temp->next = temp->next == 0 ? 0 : temp->next->next;
-//			checkpointIt = checkpointIt->next;
-//		}
-//		TabNode<T>* temp = tabIt->next;
-//		tabIt->next = temp->next;
-//		temp->next = temp->next == 0 ? 0 :temp->next->next;
-//		tabIt = tabIt->next;
-//	}
-//}
 
 template<class T>
 inline CheckpointList<T>::~CheckpointList()
