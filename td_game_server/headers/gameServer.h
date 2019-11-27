@@ -33,12 +33,10 @@ class GameServer
 {
 public:
 	GameServer(const int& gameServerPort, Client* clients);
-	GameServer();
 	~GameServer();
 	void Loop();
 	void Stop();
 private:
-	void InitialiseComponentDataStructure();
 	void WaitForTerminate();
 private:
 	//Terminate

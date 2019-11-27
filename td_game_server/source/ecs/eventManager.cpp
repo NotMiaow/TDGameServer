@@ -18,33 +18,24 @@ void EventManager::Init(Client *clients, NetworkManager& networkManager, SharedQ
     m_motors = &motors;
     m_transforms = &transforms;
 
-    int cnt = 0;
+    //Seed players
+    for(int i = 0; i < MAX_CLIENTS; i++)
     {
-        //Seed players
-        TabNode<PlayerComponent> *tabIt = m_players->GetTabHead();
-        while(tabIt)
-        {
-            PlayerComponent player;
-            player.client = &clients[cnt];
-            player.connected = false;
-            player.ready = false;
-            player.lives = STARTING_LIVES;
-            m_players->InsertNode(player, tabIt->checkpointNode);
-            tabIt = m_players->GetNextTab(&*tabIt);
-            cnt++;
-        }
+        PlayerComponent player;
+        player.client = &clients[i];
+        player.connected = false;
+        player.ready = false;
+        player.lives = STARTING_LIVES;
+        m_players->InsertNode(player, i, PLAYER_PLAYERS);
     }
+
+    //Seed resources
+    for(int i = 0; i < MAX_CLIENTS; i++)
     {
-        //Seed resources
-        TabNode<BankComponent> *tabIt = m_banks->GetTabHead();
-        for (int i = 0; i < MAX_CLIENTS; i++)
-        {
-            BankComponent bank;
-            bank.gold = STARTING_GOLD;
-            bank.income = STARTING_INCOME;
-            m_banks->InsertNode(bank, tabIt->checkpointNode);
-            tabIt = m_banks->GetNextTab(&*tabIt);
-        }
+        BankComponent bank;
+        bank.gold = STARTING_GOLD;
+        bank.income = STARTING_INCOME;
+        m_banks->InsertNode(bank, i, PLAYER_BANKS);
     }
 
     //Create Motor
@@ -56,9 +47,7 @@ void EventManager::Init(Client *clients, NetworkManager& networkManager, SharedQ
     //    Vector2 target4;
     //    target1.x = 8;
     //    target1.y = 3;
-    //    target2.x = 2;
-    //    target2.y = 6;
-    //    target3.x = 10;
+    //    target2.x = 2;GetCheckpointHead
     //    target3.y = 8;
     //    target4.x = 2;
     //    target4.y = GRID_SIZE_Y + DESPAWN_SIZE;
@@ -129,12 +118,15 @@ void EventManager::SwitchEvent()
 void EventManager::ConnectPlayer()
 {
     ConnectEvent* event = dynamic_cast<ConnectEvent *>(m_event);
-    DataNode<PlayerComponent> *pit = m_players->GetNodeHead();
-    FindPlayerByClientId(event->clientId, pit);
 
-    pit->data.connected = true;
-    pit->data.ready = false;
-    m_networkManager->MessageClient(pit->data.client->socketId, event->ToNetworkable());
+    //Get player
+    CheckpointList<PlayerComponent>::Iterator playerIt(m_players->GetNodeHead(), 0);
+    for(;!playerIt.End() && playerIt.Get()->client->id != event->clientId; playerIt++);
+    PlayerComponent* player = playerIt.Get();
+
+    player->connected = true;
+    player->ready = false;
+    m_networkManager->MessageClient(player->client->socketId, event->ToNetworkable());
 }
 
 void EventManager::DisconnectPlayer()
@@ -145,41 +137,49 @@ void EventManager::DisconnectPlayer()
 void EventManager::ReadyUpPlayer()
 {
     ReadyUpEvent* event = dynamic_cast<ReadyUpEvent *>(m_event);
-    DataNode<PlayerComponent> *pit = m_players->GetNodeHead();
-    const int playerPosition = FindPlayerByClientId(event->clientId, pit);
 
-    pit->data.ready = true;
+
+    //Get player and his position within components
+    int playerPosition = 0;
+    CheckpointList<PlayerComponent>::Iterator playerIt(m_players->GetNodeHead(), 0);
+    for(;!playerIt.End() && playerIt.Get()->client->id != event->clientId; playerPosition++, playerIt++);
+    PlayerComponent* player = playerIt.Get();
+
+    //Ready up player
+    player->ready = true;
+    
+    //Answer client
     event->playerPosition = playerPosition;
     event->players = m_players;        
     event->banks = m_banks;
-    m_networkManager->MessageClient(pit->data.client->socketId, event->ToNetworkable());
-    return;
+    m_networkManager->MessageClient(player->client->socketId, event->ToNetworkable());
 }
 
 void EventManager::BuildTower()
 {
     BuildTowerEvent* event = dynamic_cast<BuildTowerEvent*>(m_event);
 
-    //Get player
-    DataNode<PlayerComponent>* playerIt = m_players->GetNodeHead();
-    const int playerPosition = FindPlayerByClientId(event->clientId, playerIt);
+    //Get player and his position within components
+    int playerPosition = 0;
+    CheckpointList<PlayerComponent>::Iterator playerIt(m_players->GetNodeHead(), 0);
+    for(;!playerIt.End() && playerIt.Get()->client->id != event->clientId; playerPosition++, playerIt++);
+    PlayerComponent* player = playerIt.Get();
 
     //Return if the player does not have ennough gold
-    DataNode<BankComponent>* bankIt = m_banks->GetNodeHead();
-    for(int i = 0; i < playerPosition; i++, bankIt = m_banks->GetNextNode(&*bankIt));
-    if(bankIt->data.gold < TOWER_COSTS[0])
+    CheckpointList<BankComponent>::Iterator bankIt = m_banks->GetIterator(playerPosition, PLAYER_BANKS);
+    if(bankIt.Get()->gold < TOWER_COSTS[0])
         return;
-
-    //Get player's towers
-    CheckpointNode<OffenseComponent>* offenseIt = m_offenses->GetTabHead()->checkpointNode;
-    CheckpointNode<TransformComponent>* transformIt = m_transforms->GetTabHead()->checkpointNode;
-    GetPlayerTowers(playerPosition, offenseIt, transformIt);
+    BankComponent* bank = bankIt.Get();
 
     //Return if there is already a tower a the requested position
-    DataNode<TransformComponent>* nodeIt;
-    for (nodeIt = transformIt->node; nodeIt && nodeIt != transformIt->next->node; nodeIt = m_transforms->GetNextNode(&*nodeIt))
-        if(nodeIt->data.position.x == event->position.x && nodeIt->data.position.y == event->position.y)
-            return;
+    CheckpointList<TransformComponent>::Iterator transformIt = m_transforms->GetIterator(playerPosition, TOWER_TRANSFORMS);
+    for(;!transformIt.End(); transformIt++)
+        if(transformIt.Get()->position.x == event->position.x && transformIt.Get()->position.y == event->position.y)
+           return;
+
+    //Get player's towers
+    CheckpointList<OffenseComponent>::Iterator offenseIt = m_offenses->GetIterator(playerPosition, TOWER_OFFENSES);
+    transformIt = m_transforms->GetIterator(playerPosition, TOWER_TRANSFORMS);
 
     //Create tower's OffenseComponent
     OffenseComponent offense;
@@ -191,45 +191,11 @@ void EventManager::BuildTower()
     TransformComponent transform;
     transform.position.x = event->position.x;
     transform.position.y = event->position.y;
-
-    m_offenses->InsertNode(offense, offenseIt);
-    m_transforms->InsertNode(transform, transformIt);
-
+    //Insert components
+    m_offenses->InsertNode(offense, playerPosition, TOWER_OFFENSES);
+    m_transforms->InsertNode(transform, playerPosition, TOWER_TRANSFORMS);
     //Substract gold from bank
-    bankIt->data.gold += -TOWER_COSTS[0];
-    event->remainingGold = bankIt->data.gold;
-    m_networkManager->MessageClient(playerIt->data.client->socketId, event->ToNetworkable());
-}
-
-const int EventManager::FindPlayerByClientId(const int &clientId, DataNode<PlayerComponent> * pit)
-{
-    int playerPosition = 0;
-    if(pit == 0) pit = m_players->GetNodeHead();
-    while (pit->data.client->id != clientId)
-    {
-        playerPosition++;
-        pit = m_players->GetNextNode(&*pit);
-    }
-    return playerPosition;
-}
-
-void EventManager::GetPlayerTowers(const int& playerPosition, CheckpointNode<OffenseComponent>* offenseIt, CheckpointNode<TransformComponent>* transformIt)
-{
-    TabNode<OffenseComponent>* offenseTabIt = m_offenses->GetTabHead();
-    TabNode<TransformComponent>* transformTabIt = m_transforms->GetTabHead();
-    int cnt = 0;
-    
-    //Get tabs
-    while (cnt++ < playerPosition)
-    {
-        offenseTabIt = m_offenses->GetNextTab(&*offenseTabIt);
-        transformTabIt = m_transforms->GetNextTab(&*transformTabIt);
-    }
-
-    //Get offense checkpoint
-    cnt = 0; offenseIt = offenseTabIt->checkpointNode;
-    while (cnt++ < O_TOWER) offenseIt = m_offenses->GetNextCheckpoint(offenseIt);
-    //Get transform checkpoint
-    cnt = 0; transformIt = transformTabIt->checkpointNode;
-    while (cnt++ < T_TOWER) transformIt = m_transforms->GetNextCheckpoint(transformIt);
+    bank->gold += -TOWER_COSTS[0];
+    event->remainingGold = bank->gold;
+    m_networkManager->MessageClient(player->client->socketId, event->ToNetworkable());
 }

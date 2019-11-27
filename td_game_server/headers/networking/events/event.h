@@ -21,6 +21,9 @@
 #include "playerComponent.h"
 #include "bankComponent.h"
 
+//Misc
+#include "cst.h"
+
 struct Event
 {
 	virtual EventType GetType() const = 0;
@@ -91,18 +94,21 @@ struct ReadyUpEvent : public Event
 	EventType GetType() const { return EReadyUp; }
 	std::string ToNetworkable() const
 	{
-		DataNode<PlayerComponent>* pit = players->GetNodeHead();
-		DataNode<BankComponent>* bit = banks->GetNodeHead();
-		std::ostringstream os;
-		os << "{" << EReadyUp << ";" << playerPosition << ";";
-		while (pit->next)
+		CheckpointList<PlayerComponent>::Iterator playerIt(players->GetNodeHead(), 0);
+		CheckpointList<BankComponent>::Iterator bankIt(banks->GetNodeHead(), 0);
+		PlayerComponent* player;
+		BankComponent* bank;
+		std::string message = "{" + std::to_string(EReadyUp) + ";" + std::to_string(playerPosition) + ";";
+		for(;!playerIt.End(); playerIt++, bankIt++)
 		{
-			os << pit->data.connected << ";" << pit->data.ready << ";" << pit->data.lives << ";" << bit->data.gold << ";" << bit->data.income << ";";
-			pit = players->GetNextNode(&*pit);
-			bit = banks->GetNextNode(&*bit);
+			player = playerIt.Get();
+			bank =   bankIt.Get();
+			message += std::to_string(player->connected) + ";" + std::to_string(player->ready) + ";" + std::to_string(player->lives) + ";" + 
+						std::to_string(bank->gold) + ";" + std::to_string(bank->income) + ";";
 		}
-		os << pit->data.connected << ";" << pit->data.ready << ";" << pit->data.lives << ";" << bit->data.gold << ";" << bit->data.income << "}";
-		return os.str();
+		message = message.substr(0, message.length() - 2);
+		message += "}";
+		return message;
 	}
 
 	int playerPosition;

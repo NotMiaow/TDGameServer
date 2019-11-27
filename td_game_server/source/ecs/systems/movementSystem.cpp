@@ -18,14 +18,14 @@ MovementSystem::~MovementSystem()
 
 void MovementSystem::Loop(const float& deltaTime)
 {
-	DataNode<MotorComponent>* mNode = m_motors->GetNodeHead();
-	DataNode<TransformComponent>* tNode = m_transforms->GetNodeHead();
-	while (mNode != NULL)
-	{
-		SwitchBehaviour(deltaTime, mNode->data, tNode->data);
-		mNode = m_motors->GetNextNode(&*mNode);
-		tNode = m_transforms->GetNextNode(&*tNode);
-	}
+//	DataNode<MotorComponent>* mNode = m_motors->GetNodeHead();
+//	DataNode<TransformComponent>* tNode = m_transforms->GetNodeHead();
+//	while (mNode != NULL)
+//	{
+//		SwitchBehaviour(deltaTime, mNode->data, tNode->data);
+//		mNode = m_motors->GetNextNode(&*mNode);
+//		tNode = m_transforms->GetNextNode(&*tNode);
+//	}
 }
 
 void MovementSystem::SwitchBehaviour(const float& deltaTime, MotorComponent& motor, TransformComponent& transform)
