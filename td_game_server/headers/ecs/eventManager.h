@@ -43,6 +43,7 @@ private:
     void DisconnectPlayer();
     void ReadyUpPlayer();
     void BuildTower();
+    void SellTower();
     const int FindPlayerByClientId(const int &clientId, DataNode<PlayerComponent> * pit);
     void GetPlayerTowers(const int& playerPosition, CheckpointNode<OffenseComponent>* oit, CheckpointNode<TransformComponent>* tit);
 

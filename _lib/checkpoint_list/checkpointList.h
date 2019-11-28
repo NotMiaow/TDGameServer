@@ -14,23 +14,31 @@ public:
 	class Iterator
 	{
 	public:
-		Iterator(DataNode<T> *start, DataNode<T> *end) : m_curNode(start), m_endNode(end) {}
-		void operator++(int) { m_curNode = m_curNode->next; }
-		T* Get() { return &m_curNode->data; }
-		bool End() { return m_curNode == m_endNode;	}
-
+		Iterator(DataNode<T> *start, DataNode<T> *end) : m_index(0), m_curNode(start), m_endNode(end) {}
+		void operator++(int) { m_index++; m_curNode = m_curNode->next; }
+		T* Get() const { return &m_curNode->data; }
+		bool End() const { return m_curNode == m_endNode;	}
+		const int Index() const { return m_index; }
 	private:
+		int m_index;
 		DataNode<T> *m_curNode;
 		DataNode<T> *m_endNode;
 	};
 	CheckpointList();
 	~CheckpointList();
 	void Init(const int &tabCount, const int &checkpointCount);
-	auto GetIterator(const int &tabIndex, const int &checkpointIndex);
 	DataNode<T> *GetNodeHead() const;
+	auto GetIterator(const int &tabIndex, const int &checkpointIndex);
+	T* GetData(const int& index, const int& tabIndex, const int& checkpointIndex) const;
 	void InsertNode(const T &data, const int &tabIndex, const int &checkpointIndex);
+	void RemoveNode(const int& index, const int& tabIndex, const int& checkpointIndex);
 private:
-	CheckpointNode<T> *InsertCheckpoint(CheckpointNode<T> *checkpointNode);
+	void RemoveAtCheckpointHead(CheckpointNode<T>* checkpointNode);
+	CheckpointNode<T>* GetCheckpoint(TabNode<T>* tabIt, const int& checkpointIndex);
+	CheckpointNode<T>* GetPreviousNotEmptyCheckpoint(CheckpointNode<T>* currentCheckpoint);
+	CheckpointNode<T>* GetNextNotEmptyCheckpoint(CheckpointNode<T>* currentCheckpoint);
+	DataNode<T>* GetLastNodeOfCheckpoint(CheckpointNode<T>* checkpointNode);
+	CheckpointNode<T>* InsertCheckpoint(CheckpointNode<T> *checkpointNode);
 	TabNode<T> *InsertTab(TabNode<T> *tabNode);
 	void Clear();
 
@@ -41,6 +49,7 @@ private:
 	DataNode<T> *m_head;
 	CheckpointNode<T> *m_checkpointHead;
 	TabNode<T> *m_tabHead;
+	int m_size;
 };
 
 template <class T>
@@ -49,6 +58,13 @@ inline CheckpointList<T>::CheckpointList()
 	m_head = 0;
 	m_checkpointHead = 0;
 	m_tabHead = 0;
+	m_size = 0;
+}
+
+template <class T>
+inline CheckpointList<T>::~CheckpointList()
+{
+	Clear();
 }
 
 template <class T>
@@ -66,9 +82,9 @@ inline void CheckpointList<T>::Init(const int &tabCount, const int &checkpointCo
 }
 
 template <class T>
-inline CheckpointList<T>::~CheckpointList()
+inline DataNode<T> *CheckpointList<T>::GetNodeHead() const
 {
-	Clear();
+	return m_head;
 }
 
 template <class T>
@@ -92,10 +108,19 @@ inline auto CheckpointList<T>::GetIterator(const int &tabIndex, const int &check
 	return iterator;
 }
 
-template <class T>
-inline DataNode<T> *CheckpointList<T>::GetNodeHead() const
+template<class T>
+inline T* CheckpointList<T>::GetData(const int& index, const int& tabIndex, const int& checkpointIndex) const
 {
-	return m_head;
+	//Get the tab at requested index
+	TabNode<T>* tabIt = m_tabHead;
+	for(int i = 0; i < tabIndex; i++, tabIt = tabIt->next);
+	//Get the requested checkpoint within the requested tab
+	CheckpointNode<T>* checkpointIt = tabIt->checkpointNode;
+	for(int i = 0; i < checkpointIndex; i++, checkpointIt = checkpointIt->next);
+	//Get the requested node within requested checkpoint
+	DataNode<T>* nodeIt = checkpointIt->node;
+	for(int i = 0; nodeIt && i < index; i++, nodeIt = nodeIt->next);
+	return nodeIt ? &nodeIt->data : 0;
 }
 
 template <class T>
@@ -105,15 +130,93 @@ inline DataNode<T> *CheckpointList<T>::InsertNodeAfter(const T &data, DataNode<T
 	if (m_head == 0)
 	{
 		m_head = new DataNode<T>(data, 0);
+		m_size++;
 		return m_head;
 	}
 
 	temp = new DataNode<T>(data, node->next);
 	node->next = temp;
+	m_size++;
 	return temp;
 }
 
 template <class T>
+inline void CheckpointList<T>::RemoveNode(const int& index, const int& tabIndex, const int& checkpointIndex)
+{
+	//Get the tab at requested index
+	TabNode<T>* tabIt = m_tabHead;
+	for(int i = 0; i < tabIndex; i++, tabIt = tabIt->next);
+	//Get the requested checkpoint within the requested tab
+	CheckpointNode<T>* checkpointIt = tabIt->checkpointNode;
+	for(int i = 0; i < checkpointIndex; i++, checkpointIt = checkpointIt->next);
+	if(checkpointIt->node == 0)
+	{
+		std::cout << "Attempted removing on an empty checkpoint (0," << tabIndex << ","<< checkpointIndex << ")" << std::endl;
+		return;
+	}
+
+	if(index == 0)
+	{
+		if(tabIndex == 0)
+		{
+			if(checkpointIndex == 0 && m_head)
+			{
+				CheckpointNode<T>* nextNotEmpty = GetNextNotEmptyCheckpoint(checkpointIt);
+				DataNode<T>* temp = m_head;
+				m_checkpointHead->node = (nextNotEmpty && m_head->next == nextNotEmpty->node ? 0 : m_head->next);
+				m_head = m_head->next;
+				delete temp;
+				m_size--;
+				std::cout << "Removed (0,0,0)" << std::endl;
+			}
+			else RemoveAtCheckpointHead(checkpointIt);
+		}
+		else RemoveAtCheckpointHead(checkpointIt);
+	}
+	else
+	{
+		//Get the requested node within requested checkpoint
+		DataNode<T>* nodeIt = checkpointIt->node;
+		for(int i = 0; i < index - 1; i++, nodeIt = nodeIt->next);
+		DataNode<T>* temp = nodeIt->next;
+		nodeIt->next = nodeIt->next->next;
+		delete temp;
+		m_size--;
+		std::cout << "Removed (x,x,x)" << std::endl;
+	}
+}
+
+template<class T>
+inline void CheckpointList<T>::RemoveAtCheckpointHead(CheckpointNode<T>* checkpointNode)
+{
+	CheckpointNode<T>* previousNotEmpty = GetPreviousNotEmptyCheckpoint(checkpointNode);
+	if(previousNotEmpty)
+	{
+		DataNode<T>* previous;
+		if(previousNotEmpty->node->next == checkpointNode->node)
+			previous = previousNotEmpty->node;
+		else previous = GetLastNodeOfCheckpoint(previousNotEmpty);
+		DataNode<T>* temp = checkpointNode->node;
+		previous->next = checkpointNode->node->next;
+		checkpointNode->node = checkpointNode->node->next;
+		delete temp;
+		m_size--;
+		std::cout << "Removed (0,x,x)" << std::endl;
+	}
+	else if(m_head)
+	{
+		CheckpointNode<T>* nextNotEmpty = GetNextNotEmptyCheckpoint(checkpointNode);
+		DataNode<T>* temp = m_head;
+		checkpointNode->node = (nextNotEmpty && m_head->next == nextNotEmpty->node ? 0 : m_head->next);
+		m_head = m_head->next;
+		delete temp;
+		m_size--;
+		std::cout << "Removed (0,x,x)***which happened to be m_head****" << std::endl;
+	}
+	else std::cout << "Attempted removing on an empty checkpoint (0,x,x)" << std::endl;
+}
+
+template<class T>
 inline void CheckpointList<T>::InsertNode(const T &data, const int &tabIndex, const int &checkpointIndex)
 {
 	//Get the tab at requested index
@@ -148,6 +251,46 @@ inline void CheckpointList<T>::InsertNode(const T &data, const int &tabIndex, co
 	}
 	else
 		InsertNodeAfter(data, checkpointIt->node);
+}
+
+template<class T>
+inline CheckpointNode<T>* CheckpointList<T>::GetCheckpoint(TabNode<T>* tabIt, const int& checkpointIndex)
+{
+	CheckpointNode<T>* checkpointIt = tabIt->checkpointNode;
+	for(int i = 0; i < checkpointIndex; i++, checkpointIt = checkpointIt->next);
+	return checkpointIt;
+}
+
+template<class T>
+inline CheckpointNode<T>* CheckpointList<T>::GetPreviousNotEmptyCheckpoint(CheckpointNode<T>* currentCheckpoint)
+{
+	CheckpointNode<T>* prev = m_checkpointHead;
+	CheckpointNode<T>* previousNotEmpty = 0;
+	while(prev->next != currentCheckpoint)
+	{
+		if(prev->node)
+			previousNotEmpty = prev;
+		prev = prev->next;
+	}
+	return prev->node ? prev : 0;
+}
+
+template<class T>
+inline CheckpointNode<T>* CheckpointList<T>::GetNextNotEmptyCheckpoint(CheckpointNode<T>* currentCheckpoint)
+{
+	CheckpointNode<T>* cur = currentCheckpoint;
+	while(cur->next && currentCheckpoint->node->next != cur->next->node)
+		cur = cur->next;
+	return cur->next;
+}
+
+template<class T>
+inline DataNode<T>* CheckpointList<T>::GetLastNodeOfCheckpoint(CheckpointNode<T>* checkpointNode)
+{
+	DataNode<T>* lastNode = checkpointNode->node;
+	while(lastNode->next != checkpointNode->next->node)
+		lastNode = lastNode->next;
+	return lastNode;
 }
 
 template <class T>

@@ -184,22 +184,22 @@ struct BuildTowerEvent : public Event
 
 struct SellTowerEvent : public Event
 {
-	SellTowerEvent(const int&  clientId, const int& towerPosition)
+	SellTowerEvent(const int&  clientId, const Vector2& towerPosition)
 	{
-
 		this->clientId = clientId;
-		this->towerPosition = towerPosition;
+		this->towerPosition.x = towerPosition.x;
+		this->towerPosition.y = towerPosition.y;
 	}
 	EventType GetType() const { return ESellTower; }
 	std::string ToNetworkable() const
 	{
 		std::ostringstream os;
-		os << "{" << ESellTower << ";" << towerPosition << ";" << sellValue << "}";
+		os << "{" << ESellTower << ";(" << towerPosition.y << ":" << towerPosition.x << ");" << remainingGold << "}";
 		return os.str();
 	}
 
-	int towerPosition;
-	int sellValue;
+	Vector2 towerPosition;
+	int remainingGold;
 };
 
 struct SendUnitGroupEvent : public Event

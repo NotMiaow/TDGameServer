@@ -109,6 +109,7 @@ void EventManager::SwitchEvent()
         BuildTower();
         break;
     case ESellTower:
+        SellTower();
         break;
     case ESendUnitGroup:
         break;
@@ -124,6 +125,7 @@ void EventManager::ConnectPlayer()
     for(;!playerIt.End() && playerIt.Get()->client->id != event->clientId; playerIt++);
     PlayerComponent* player = playerIt.Get();
 
+    //Answer client
     player->connected = true;
     player->ready = false;
     m_networkManager->MessageClient(player->client->socketId, event->ToNetworkable());
@@ -138,7 +140,6 @@ void EventManager::ReadyUpPlayer()
 {
     ReadyUpEvent* event = dynamic_cast<ReadyUpEvent *>(m_event);
 
-
     //Get player and his position within components
     int playerPosition = 0;
     CheckpointList<PlayerComponent>::Iterator playerIt(m_players->GetNodeHead(), 0);
@@ -147,7 +148,6 @@ void EventManager::ReadyUpPlayer()
 
     //Ready up player
     player->ready = true;
-    
     //Answer client
     event->playerPosition = playerPosition;
     event->players = m_players;        
@@ -163,13 +163,12 @@ void EventManager::BuildTower()
     int playerPosition = 0;
     CheckpointList<PlayerComponent>::Iterator playerIt(m_players->GetNodeHead(), 0);
     for(;!playerIt.End() && playerIt.Get()->client->id != event->clientId; playerPosition++, playerIt++);
-    PlayerComponent* player = playerIt.Get();
+    Client* client = playerIt.Get()->client;
 
     //Return if the player does not have ennough gold
-    CheckpointList<BankComponent>::Iterator bankIt = m_banks->GetIterator(playerPosition, PLAYER_BANKS);
-    if(bankIt.Get()->gold < TOWER_COSTS[0])
+    BankComponent* bank = m_banks->GetData(0, playerPosition, PLAYER_BANKS);
+    if(bank->gold < TOWER_COSTS[event->towerType])
         return;
-    BankComponent* bank = bankIt.Get();
 
     //Return if there is already a tower a the requested position
     CheckpointList<TransformComponent>::Iterator transformIt = m_transforms->GetIterator(playerPosition, TOWER_TRANSFORMS);
@@ -177,25 +176,63 @@ void EventManager::BuildTower()
         if(transformIt.Get()->position.x == event->position.x && transformIt.Get()->position.y == event->position.y)
            return;
 
-    //Get player's towers
-    CheckpointList<OffenseComponent>::Iterator offenseIt = m_offenses->GetIterator(playerPosition, TOWER_OFFENSES);
-    transformIt = m_transforms->GetIterator(playerPosition, TOWER_TRANSFORMS);
-
     //Create tower's OffenseComponent
     OffenseComponent offense;
     offense.baseAttackRate = 1;
     offense.baseDamage = 1;
     offense.curAttackRate = offense.baseAttackRate;
     offense.curDamage = offense.baseDamage;
+
     //Create tower's TransformComponent
     TransformComponent transform;
     transform.position.x = event->position.x;
     transform.position.y = event->position.y;
-    //Insert components
+
+    //Create tower
     m_offenses->InsertNode(offense, playerPosition, TOWER_OFFENSES);
     m_transforms->InsertNode(transform, playerPosition, TOWER_TRANSFORMS);
+
     //Substract gold from bank
-    bank->gold += -TOWER_COSTS[0];
+    bank->gold += -TOWER_COSTS[event->towerType];
+
+    //Answer client
     event->remainingGold = bank->gold;
-    m_networkManager->MessageClient(player->client->socketId, event->ToNetworkable());
+    m_networkManager->MessageClient(client->socketId, event->ToNetworkable());
+}
+
+void EventManager::SellTower()
+{
+    SellTowerEvent* event = dynamic_cast<SellTowerEvent*>(m_event);
+
+    //Get player and his position within components
+    int playerPosition = 0;
+    CheckpointList<PlayerComponent>::Iterator playerIt(m_players->GetNodeHead(), 0);
+    for(;!playerIt.End() && playerIt.Get()->client->id != event->clientId; playerPosition++, playerIt++);
+    Client* client = playerIt.Get()->client;
+
+    //Find the requested tower's position within components
+    int towerPosition = 0;
+    CheckpointList<TransformComponent>::Iterator transformIt = m_transforms->GetIterator(playerPosition, TOWER_TRANSFORMS);
+    for(;!transformIt.End(); towerPosition++, transformIt++)
+        if(transformIt.Get()->position.x == event->towerPosition.x && transformIt.Get()->position.y == event->towerPosition.y)
+            break;
+    
+    //If tower does not exist
+    if(transformIt.End())
+    {
+        std::cout << "tower does not exist, *****resynchronise client*****" << std::endl;
+        return;
+    }
+
+    //Remove the tower
+    m_transforms->RemoveNode(towerPosition, playerPosition, TOWER_TRANSFORMS);
+    m_offenses->RemoveNode(towerPosition, playerPosition, TOWER_OFFENSES);
+
+    //Give gold back
+    BankComponent* bank = m_banks->GetData(0, playerPosition, PLAYER_BANKS);
+    bank->gold += TOWER_COSTS[0];
+
+    //AnswerClient
+    event->remainingGold = bank->gold;
+    m_networkManager->MessageClient(client->socketId, event->ToNetworkable());
 }

@@ -48,10 +48,10 @@ static Event* CreateBuildTowerEvent(const int& clientId, std::vector<std::string
 
 static Event* CreateSellTowerEvent(const int& clientId, std::vector<std::string> elements)
 {
-	int towerPosition;
+	Vector2 towerPosition;
 
 	if (elements.size() != 1) return CreateErrorEvent(clientId, ESellTower, GEWrongParemeterAmount);
-	if (!ToInt(elements[0], towerPosition)) return CreateErrorEvent(clientId, ESellTower, GEWrongParameterType);
+	if (!ToPosition(elements[0], towerPosition)) return CreateErrorEvent(clientId, ESellTower, GEWrongParameterType);
 
 	Event* e = new SellTowerEvent(clientId, towerPosition);
 	return e;
