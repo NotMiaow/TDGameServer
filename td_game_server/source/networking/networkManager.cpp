@@ -118,7 +118,7 @@ void NetworkManager::ListenToClient(const int& socketId)
 			if(message.length() == messageLength)
 			{
 				Action* action = CreateAction(socketId, Split(message, message.length()));
-				m_actionQueue->Push(action);
+				m_actionQueue->push_back(action);
 				message = "";
 				messageLength = 0;
 			}
@@ -133,7 +133,7 @@ void NetworkManager::ListenToClient(const int& socketId)
 		}
 		else {
 			Action* disconnectAction = CreateDisconnectAction(socketId);
-			m_actionQueue->Push(disconnectAction);
+			m_actionQueue->push_back(disconnectAction);
 			close(m_clientSockets[socketId]);
 			m_socketActive[socketId] = false;
 			return;
@@ -143,7 +143,7 @@ void NetworkManager::ListenToClient(const int& socketId)
 	m_socketActive[socketId] = false;
 
 	Action* disconnectAction = CreateDisconnectAction(socketId);
-	m_actionQueue->Push(disconnectAction);
+	m_actionQueue->push_back(disconnectAction);
 	iResult = shutdown(m_clientSockets[socketId], SHUT_WR);
 }
 

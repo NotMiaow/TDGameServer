@@ -20,12 +20,14 @@ void ECS::Init(SharedQueue<Event*>& eventQueue, CheckpointList<PlayerComponent>&
     //Systems
     m_timeSystem = TimeSystem();
     m_movementSystem = MovementSystem(*m_motors, *m_transforms);
+    m_pathfindingSystem = PathfindingSystem(*m_eventQueue, *m_motors, *m_transforms);
 }
 
 bool ECS::Loop()
 {
     m_timeSystem.Loop();
-//        m_movementSystem.Loop();
+    m_pathfindingSystem.Loop();
+    m_movementSystem.Loop(m_timeSystem.DeltaTime());
     
     //Kill server from within ecs
 //    return false;

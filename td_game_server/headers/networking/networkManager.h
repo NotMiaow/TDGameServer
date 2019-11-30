@@ -14,7 +14,6 @@
 
 #define DEFAULT_BUFLEN 512
 
-#include "queue.h"
 #include "shared_queue.h"
 #include "actionLanguage.h"
 #include "action.h"

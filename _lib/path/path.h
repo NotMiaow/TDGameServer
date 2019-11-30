@@ -1,13 +1,16 @@
 #ifndef PATH_H__
 #define	PATH_H__
 
+#include <queue>
 #include "vector2.h"
-#include "queue.h"
 
 struct Path
 {
-	Queue<Vector2> path;
-	int length;
+	Path() { }
+	Path(const std::queue<Vector2>& path) : path(path), totalDistance(0), lastYDirection(0), lastXDirection(0) { }
+	~Path() { }
+	std::queue<Vector2> path;
+	int totalDistance;
 	int lastYDirection;
 	int lastXDirection;
 };

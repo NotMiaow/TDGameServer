@@ -37,50 +37,15 @@ void EventManager::Init(Client *clients, NetworkManager& networkManager, SharedQ
         bank.income = STARTING_INCOME;
         m_banks->InsertNode(bank, i, PLAYER_BANKS);
     }
-
-    //Create Motor
-    //    MotorComponent motor;
-    //    Queue<Vector2> path(30);
-    //    Vector2 target1;
-    //    Vector2 target2;
-    //    Vector2 target3;
-    //    Vector2 target4;
-    //    target1.x = 8;
-    //    target1.y = 3;
-    //    target2.x = 2;GetCheckpointHead
-    //    target3.y = 8;
-    //    target4.x = 2;
-    //    target4.y = GRID_SIZE_Y + DESPAWN_SIZE;
-    //    path.Push(target4);
-    //    path.Push(target3);
-    //    path.Push(target2);
-    //    path.Push(target1);
-    //    motor.path = path;
-    //    motor.behaviour = Move;
-    //    motor.baseSpeed = 2;
-    //    motor.curSpeed = 2;
-    //    m_motors->InsertAfterNode(motor, m_motors->GetNodeHead());
-    //
-    //    //Create Transform
-    //    TransformComponent transform;
-    //    transform.position.x = SPAWN_POSITION_X;
-    //    transform.position.y = SPAWN_POSITION_Y;
-    //    //Update normalised target
-    //	float distanceX = motor.path.Front().x - transform.position.x;
-    //	float distanceY = motor.path.Front().y - transform.position.y;
-    //	float distance = sqrt(pow(distanceX, 2) + pow(distanceY, 2));
-    //	transform.normalizedTarget.x = distanceX / distance;
-    //	transform.normalizedTarget.y = distanceY / distance;
-    //    m_transforms->InsertAfterNode(transform, m_transforms->GetNodeHead());
 }
 
 void EventManager::Loop()
 {
-    while (m_eventQueue->GetSize())
+    while (m_eventQueue->size())
     {
-        m_event = m_eventQueue->Pop();
+        m_event = m_eventQueue->front();
         if (m_event != 0) SwitchEvent();
-        delete m_event;
+        m_eventQueue->pop_front();
     }
 }
 
@@ -100,6 +65,7 @@ void EventManager::SwitchEvent()
         ReadyUpPlayer();
         break;
     case ESpawnUnitGroup:
+        SpawnUnitGroup();
         break;
     case ENewPath:
         break;
@@ -155,6 +121,44 @@ void EventManager::ReadyUpPlayer()
     m_networkManager->MessageClient(player->client->socketId, event->ToNetworkable());
 }
 
+void EventManager::SpawnUnitGroup()
+{
+    SpawnUnitGroupEvent* event = dynamic_cast<SpawnUnitGroupEvent*>(m_event);
+
+    //Get player and his position within components
+    int playerPosition = 0;
+    CheckpointList<PlayerComponent>::Iterator playerIt(m_players->GetNodeHead(), 0);
+    for(;!playerIt.End() && playerIt.Get()->client->id != event->clientId; playerPosition++, playerIt++);
+    const int socketId = playerIt.Get()->client->socketId;
+
+    //Create unit group's offense
+    OffenseComponent offense;
+    offense.baseAttackRate = 1;
+    offense.baseDamage = 1;
+    offense.curAttackRate = offense.baseAttackRate;
+    offense.curDamage = offense.baseDamage;
+
+    //Create unit group's transform
+    TransformComponent transform;
+    transform.position.x = SPAWN_POSITION_X;
+    transform.position.y = SPAWN_POSITION_Y;
+
+    //Create unit group's motor
+    MotorComponent motor;
+    std::queue<Vector2> path;
+    motor.path = path;
+    motor.behaviour = WaitingForPath;
+    motor.baseSpeed = 2;
+    motor.curSpeed = 2;
+    motor.normalizedTarget.x = 0;
+    motor.normalizedTarget.y = 0;
+
+    m_offenses->InsertNode(offense, playerPosition, UNIT_GROUP_OFFENSES);
+    m_transforms->InsertNode(transform, playerPosition, UNIT_GROUP_TRANSFORMS);
+    m_motors->InsertNode(motor, playerPosition, UNIT_GROUP_MOTORS);
+    m_networkManager->MessageClient(socketId, event->ToNetworkable());
+}
+
 void EventManager::BuildTower()
 {
     BuildTowerEvent* event = dynamic_cast<BuildTowerEvent*>(m_event);
@@ -163,7 +167,7 @@ void EventManager::BuildTower()
     int playerPosition = 0;
     CheckpointList<PlayerComponent>::Iterator playerIt(m_players->GetNodeHead(), 0);
     for(;!playerIt.End() && playerIt.Get()->client->id != event->clientId; playerPosition++, playerIt++);
-    Client* client = playerIt.Get()->client;
+    const int socketId = playerIt.Get()->client->socketId;
 
     //Return if the player does not have ennough gold
     BankComponent* bank = m_banks->GetData(0, playerPosition, PLAYER_BANKS);
@@ -185,8 +189,7 @@ void EventManager::BuildTower()
 
     //Create tower's TransformComponent
     TransformComponent transform;
-    transform.position.x = event->position.x;
-    transform.position.y = event->position.y;
+    transform.position = event->position;
 
     //Create tower
     m_offenses->InsertNode(offense, playerPosition, TOWER_OFFENSES);
@@ -197,7 +200,7 @@ void EventManager::BuildTower()
 
     //Answer client
     event->remainingGold = bank->gold;
-    m_networkManager->MessageClient(client->socketId, event->ToNetworkable());
+    m_networkManager->MessageClient(socketId, event->ToNetworkable());
 }
 
 void EventManager::SellTower()
@@ -208,7 +211,7 @@ void EventManager::SellTower()
     int playerPosition = 0;
     CheckpointList<PlayerComponent>::Iterator playerIt(m_players->GetNodeHead(), 0);
     for(;!playerIt.End() && playerIt.Get()->client->id != event->clientId; playerPosition++, playerIt++);
-    Client* client = playerIt.Get()->client;
+    const int socketId = playerIt.Get()->client->socketId;
 
     //Find the requested tower's position within components
     int towerPosition = 0;
@@ -234,5 +237,5 @@ void EventManager::SellTower()
 
     //AnswerClient
     event->remainingGold = bank->gold;
-    m_networkManager->MessageClient(client->socketId, event->ToNetworkable());
+    m_networkManager->MessageClient(socketId, event->ToNetworkable());
 }

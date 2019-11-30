@@ -10,7 +10,7 @@ const int MAX_CLIENTS = 4;
 const int BUFFER_LENGTH = 512;
 
 //Engine constants
-enum Behaviour { Move, Rage, Despawn };
+enum Behaviour { WaitingForPath, Move, Rage, Despawn };
 const int MAX_GROUPS_ON_GRID = 9;
 const int SPAWN_POSITION_Y = -4;
 const int SPAWN_POSITION_X = 5;
@@ -19,7 +19,7 @@ const int GRID_SIZE_X = 11;
 const int GRID_SIZE_Y = 11;
 const int DESPAWN_SIZE = 4;
 const int STARTING_LIVES = 20;
-const int STARTING_GOLD = 400;    //temporarily high, helps debugging
+const int STARTING_GOLD = 10000;    //temporarily high, helps debugging
 const int STARTING_INCOME = 80;
 const int POST_GAME_DURATION = 1; //Milliseconds
 

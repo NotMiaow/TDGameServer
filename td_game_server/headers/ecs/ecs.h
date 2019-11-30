@@ -9,7 +9,6 @@
 
 #include "vector2.h"
 #include "path.h"
-#include "queue.h"
 #include "checkpointList.h"
 #include "event.h"
 #include "client.h"
@@ -24,6 +23,7 @@
 
 #include "timeSystem.h"
 #include "movementSystem.h"
+#include "pathfindingSystem.h"
 
 class ECS
 {
@@ -48,6 +48,7 @@ private:
 
 	//Systems
 	TimeSystem m_timeSystem;
+	PathfindingSystem m_pathfindingSystem;
 	MovementSystem m_movementSystem;
 };
 

@@ -33,7 +33,13 @@ static Event* CreateReadyUpEvent(const int& clientId)
 	return e;
 }
 
-static Event* CreateBuildTowerEvent(const int& clientId, std::vector<std::string> elements)
+static Event* CreateSpawnUnitGroupEvent(const int& clientId)
+{
+	Event* e = new SpawnUnitGroupEvent(clientId);
+	return e;
+}
+
+static Event* CreateBuildTowerEvent(const int& clientId, const std::vector<std::string>& elements)
 {
 	int towerType;
 	Vector2 position;
@@ -46,7 +52,7 @@ static Event* CreateBuildTowerEvent(const int& clientId, std::vector<std::string
 	return e;
 }
 
-static Event* CreateSellTowerEvent(const int& clientId, std::vector<std::string> elements)
+static Event* CreateSellTowerEvent(const int& clientId, const std::vector<std::string>& elements)
 {
 	Vector2 towerPosition;
 
@@ -58,9 +64,9 @@ static Event* CreateSellTowerEvent(const int& clientId, std::vector<std::string>
 }
 
 
-static Event* CreateSendUnitGroupEvent(const int& clientId, std::vector<std::string> elements)
+static Event* CreateSendUnitGroupEvent(const int& clientId, const std::vector<std::string>& elements)
 {
-	int unitType;
+	int unitType = 0;
 
 	if (elements.size() != 1) return CreateErrorEvent(clientId, ESendUnitGroup, GEWrongParemeterAmount);
 	if (!ToInt(elements[0], unitType)) return CreateErrorEvent(clientId, ESendUnitGroup, GEWrongParameterType);
@@ -87,8 +93,7 @@ static Event* CreateGameEvent(const int & clientId, std::vector<std::string> ele
 		case EReadyUp:
 			return CreateReadyUpEvent(clientId);
 		case ESpawnUnitGroup:
-			//This event is send only
-			break;
+			return CreateSpawnUnitGroupEvent(clientId);
 		case ENewPath:
 			//This event is send only
 			break;

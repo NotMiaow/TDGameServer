@@ -13,12 +13,12 @@ void ActionManager::Init(Client* clients, SharedQueue<Action*>& actionQueue, Sha
 
 void ActionManager::Loop()
 {
-	if (m_actionQueue->GetSize())
+	if (m_actionQueue->size())
 	{
-		Action* a = m_actionQueue->Pop();
+		Action* a = m_actionQueue->front();
 		std::cout << a->ToDebuggable() << std::endl;
 		if(a != 0) SwitchAction(a);
-		delete a;
+		m_actionQueue->pop_front();
 	}
 }
 
@@ -60,12 +60,12 @@ void ActionManager::ConnectClient(Action* action)
 				{
 					std::cout << "Kicking client with id: \"" << m_clients[i].id << "\" on socket \"" << m_clients[i].socketId << "\"" << std::endl;
 					Event* disconnectEvent = CreateDisconnectEvent(a->clientId, RNewLogin);
-					m_eventQueue->Push(disconnectEvent);
+					m_eventQueue->push_back(disconnectEvent);
 				}
 
 				m_clients[i].socketId = a->socketId;
 				Event* connectEvent = CreateConnectEvent(a->clientId);
-				m_eventQueue->Push(connectEvent);
+				m_eventQueue->push_back(connectEvent);
 				std::cout << "Client with id \"" << a->clientId << "\" and token \"" << a->sessionToken << "\" connected on socket \"" << a->socketId << "\"" << std::endl;
 				return;
 			}
@@ -73,9 +73,9 @@ void ActionManager::ConnectClient(Action* action)
 			{
 				std::cout << "Invalid session token, kicking client." << std::endl;
 				Action* errorAction = CreateErrorAction(a->socketId, a->clientId, AConnect, NEWrongSessionToken);
-				m_actionQueue->Push(errorAction);
+				m_actionQueue->push_back(errorAction);
 				Event* disconnectEvent = CreateDisconnectEvent(a->clientId);
-				m_eventQueue->Push(disconnectEvent);
+				m_eventQueue->push_back(disconnectEvent);
 				m_clients[i].socketId = -1;
 				return;
 			}
@@ -92,7 +92,7 @@ void ActionManager::DisconnectClient(Action* action)
 		{
 			std::cout << "Client disconnected from socket: " << a->socketId << std::endl;
 			Event* disconnectEvent = CreateDisconnectEvent(a->clientId, a->reason);
-			m_eventQueue->Push(disconnectEvent);
+			m_eventQueue->push_back(disconnectEvent);
 			m_clients[i].socketId = -1;
 		}
 	}
@@ -108,13 +108,13 @@ void ActionManager::RelayToEventManager(Action * action)
 			{
 				GameAction* a = dynamic_cast<GameAction*>(action);
 				Event* e = CreateGameEvent(a->clientId, Split(a->gameEvent, (int)a->gameEvent.length()));
-				m_eventQueue->Push(e);
+				m_eventQueue->push_back(e);
 				return;
 			}
 			else
 			{
 				Action* e = CreateErrorAction(action->socketId, action->clientId, AGameAction, NEWrongSessionToken);
-				m_actionQueue->Push(e);
+				m_actionQueue->push_back(e);
 				return;
 			}
 		}

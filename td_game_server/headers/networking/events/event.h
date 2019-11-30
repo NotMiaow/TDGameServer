@@ -14,7 +14,6 @@
 //Libraries
 #include "basicLib.h"
 #include "vector2.h"
-#include "queue.h"
 
 #include "checkpointList.h"
 //Components
@@ -118,7 +117,10 @@ struct ReadyUpEvent : public Event
 
 struct SpawnUnitGroupEvent : public Event
 {
-	SpawnUnitGroupEvent() { }
+	SpawnUnitGroupEvent(const int&  clientId)
+	{
+		this->clientId = clientId;
+	}
 	EventType GetType() const { return ESpawnUnitGroup; }
 	std::string ToNetworkable() const
 	{
@@ -143,7 +145,6 @@ struct NewPathEvent : public Event
 	}
 
 	int motorPosition;
-	Queue<Vector2> path;
 };
 
 struct RageEvent : public Event

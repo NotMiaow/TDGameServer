@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <math.h>
+#include <queue>
 
 #include "basicLib.h"
 
@@ -11,7 +12,6 @@
 #include "checkpointList.h"
 #include "vector2.h"
 #include "path.h"
-#include "queue.h"
 #include "motorComponent.h"
 #include "transformComponent.h"
 
@@ -23,7 +23,6 @@ public:
 	~MovementSystem();
 	void Loop(const float& deltaTime);
 private:
-	void SwitchBehaviour(const float& deltaTime, MotorComponent& motor, TransformComponent& transforms);
 	void MoveMotor(const float& deltaTime, MotorComponent& motor, TransformComponent& transforms);
 private:
 	TimeSystem* m_timeSystem;

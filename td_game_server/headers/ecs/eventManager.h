@@ -2,11 +2,12 @@
 #define EVENT_HANDLER_H__
 
 #include <iostream>
+#include <tuple>
 #include <math.h>
+#include <queue>
 
 //Paths
 #include "vector2.h"
-#include "queue.h"
 
 //Events
 #include "eventLanguage.h"
@@ -42,11 +43,10 @@ private:
     void ConnectPlayer();
     void DisconnectPlayer();
     void ReadyUpPlayer();
+    void SpawnUnitGroup();
     void BuildTower();
     void SellTower();
-    const int FindPlayerByClientId(const int &clientId, DataNode<PlayerComponent> * pit);
-    void GetPlayerTowers(const int& playerPosition, CheckpointNode<OffenseComponent>* oit, CheckpointNode<TransformComponent>* tit);
-
+    int GetPlayerPosition(const int& clientId, PlayerComponent* player);
 private:
     Event* m_event;
     SharedQueue<Event*>* m_eventQueue;

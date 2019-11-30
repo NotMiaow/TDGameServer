@@ -3,136 +3,86 @@
 
 #include <mutex>
 
+#include <queue>
+#include <mutex>
+#include <condition_variable>
+
 template <typename T>
 class SharedQueue
 {
 public:
-    template<typename U>
-    struct Iterator
-    {
-    public:
-        Iterator(const SharedQueue<T>& source) : capacity(source.m_capacity), front(source.m_front) { pos = front + 1; }
-        int GetPos() { return pos; }
-        bool End() { return pos == capacity; }
-        int Next() { if(pos < capacity) pos++; return pos; }
-    public:
-        const int capacity, front;
-    private:
-        int pos;
-    };
     SharedQueue();
-    SharedQueue(const int&);
     ~SharedQueue();
-    void operator=(const SharedQueue& source);
-    void Push(const T& element);
-    T Pop();
-    T Front() const;
-    T Get(Iterator<T>& iterator) const;
-    int GetFrontPosition() const;
-    int GetSize() const;
-    int GetCapacity() const;
+
+    T& front();
+    void pop_front();
+
+    void push_back(const T& item);
+    void push_back(T&& item);
+
+    int size();
+    bool empty();
+
 private:
-    int m_front, m_capacity, m_size;
-    T* m_data;
-    std::mutex m_mutex;
-};
+    std::deque<T> queue_;
+    std::mutex mutex_;
+    std::condition_variable cond_;
+}; 
 
-template<typename T>
-inline SharedQueue<T>::SharedQueue()
-{
-    m_capacity = 4;
-    m_front = m_capacity - 1;
-    m_size = 0;
-    m_data = new T[m_capacity];
-}
+template <typename T>
+SharedQueue<T>::SharedQueue(){}
 
-template<typename T>
-inline SharedQueue<T>::SharedQueue(const int& capacity)
-{
-    m_capacity = capacity;
-    m_front = m_capacity - 1;
-    m_size = 0;
-    m_data = new T[m_capacity];
-}
+template <typename T>
+SharedQueue<T>::~SharedQueue(){}
 
-template<typename T>
-inline SharedQueue<T>::~SharedQueue()
+template <typename T>
+T& SharedQueue<T>::front()
 {
-    delete[] m_data;
-}
-
-template<typename T>
-inline void SharedQueue<T>::operator=(const SharedQueue<T>& source)
-{
-    this->m_data = source.m_data;
-    this->m_capacity = source.m_capacity;
-    this->m_size = source.m_size;
-    this->m_front = source.m_front;
-}
-
-template<typename T>
-inline void SharedQueue<T>::Push(const T& element)
-{
-    m_mutex.lock();
-    if(m_size == m_capacity)
+    std::unique_lock<std::mutex> mlock(mutex_);
+    while (queue_.empty())
     {
-        m_front += m_size;
-        m_capacity = m_capacity * 2;
-        T* data = new T[m_capacity];
-        for(int i = 0; i < m_size; i++)
-            data[m_capacity - 1 - i] = m_data[m_size - 1 - i];
-        delete[] m_data;
-        m_data = data;
+        cond_.wait(mlock);
     }
-    m_data[m_front] = element;
-    m_size++;
-    m_front--;
-    m_mutex.unlock();
+    return queue_.front();
 }
 
-template<typename T>
-inline T SharedQueue<T>::Pop()
+template <typename T>
+void SharedQueue<T>::pop_front()
 {
-    m_mutex.lock();
-    if(m_size == 0)
+    std::unique_lock<std::mutex> mlock(mutex_);
+    while (queue_.empty())
     {
-        m_mutex.unlock();
-        return nullptr;
+        cond_.wait(mlock);
     }
-    m_size--;
-    m_front++;
-    m_mutex.unlock();
-    return m_data[m_front];
-}
+    queue_.pop_front();
+}     
 
-template<typename T>
-inline T SharedQueue<T>::Front() const
+template <typename T>
+void SharedQueue<T>::push_back(const T& item)
 {
-    return m_data[m_front + 1];
+    std::unique_lock<std::mutex> mlock(mutex_);
+    queue_.push_back(item);
+    mlock.unlock();     // unlock before notificiation to minimize mutex con
+    cond_.notify_one(); // notify one waiting thread
+
 }
 
-template<typename T>
-inline T SharedQueue<T>::Get(Iterator<T>& iterator) const
+template <typename T>
+void SharedQueue<T>::push_back(T&& item)
 {
-    return m_data[iterator.GetPos()];
+    std::unique_lock<std::mutex> mlock(mutex_);
+    queue_.push_back(std::move(item));
+    mlock.unlock();     // unlock before notificiation to minimize mutex con
+    cond_.notify_one(); // notify one waiting thread
+
 }
 
-template<typename T>
-inline int SharedQueue<T>::GetFrontPosition() const
+template <typename T>
+int SharedQueue<T>::size()
 {
-    return m_front;
+    std::unique_lock<std::mutex> mlock(mutex_);
+    int size = queue_.size();
+    mlock.unlock();
+    return size;
 }
-
-template<typename T>
-inline int SharedQueue<T>::GetSize() const
-{
-    return m_size;
-}
-
-template<typename T>
-inline int SharedQueue<T>::GetCapacity() const
-{
-    return m_capacity;
-}
-
 #endif
