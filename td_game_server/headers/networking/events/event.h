@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <queue>
 #include <string>
 #include <sstream>
 
@@ -132,19 +133,22 @@ struct SpawnUnitGroupEvent : public Event
 
 struct NewPathEvent : public Event
 {
-	NewPathEvent() { }
+	NewPathEvent() { path = new std::vector<Vector2>(); }
+	~NewPathEvent() { delete path; }
 	EventType GetType() const { return ENewPath; }
 	std::string ToNetworkable() const
 	{
 		std::ostringstream os;
-		os << "{" << ENewPath << ";" << motorPosition << ";";
-		//APPEND POSITIONS
-		std::cout << "APPEND POSITIONS TO NewPathEvent.ToNetworkable()" << std::endl;
+		os << "{" << ENewPath << ";" << playerPosition << ";" << motorPosition << ";";
+		for(std::vector<Vector2>::iterator pathIt = path->begin(); pathIt != path->end(); pathIt++)
+			os << "(" << pathIt->y << ":" << pathIt->x << ")";
 		os << "}";
 		return os.str();
 	}
 
+	int playerPosition;
 	int motorPosition;
+	std::vector<Vector2>* path;
 };
 
 struct RageEvent : public Event

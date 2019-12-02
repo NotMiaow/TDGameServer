@@ -15,13 +15,14 @@ void PathfindingSystem::Loop()
         CheckpointList<TransformComponent>::Iterator transformIt = m_transforms->GetIterator(i, UNIT_GROUP_TRANSFORMS);
         for(int j = 0;!motorIt.End(); j++, motorIt++, transformIt++)
             if(motorIt.Get()->behaviour == WaitingForPath)
-                FindPath(i, *motorIt.Get(), *transformIt.Get());
+                FindPath(i, j, *motorIt.Get(), *transformIt.Get());
     }
 }
 
-void PathfindingSystem::FindPath(const int& playerIndex, MotorComponent& motor, TransformComponent& transform)
+void PathfindingSystem::FindPath(const int& playerIndex, const int& motorPosition, MotorComponent& motor, const TransformComponent& transform)
 {
     //Reset pathing fields
+    if(!m_paths.empty()) m_shortestPath->path.clear();
     m_paths.clear();
     m_corners.clear();
     for(int i = 0; i < GRID_SIZE_Y; i++)
@@ -92,18 +93,31 @@ void PathfindingSystem::FindPath(const int& playerIndex, MotorComponent& motor, 
         //Then seek up
     }
 
-    motor.behaviour = Move;
-    std::cout << "pathFound:" << std::endl;
-    std::vector<Vector2>::iterator pathIt = m_shortestPath->path.begin();
-    while(pathIt != m_shortestPath->path.end())
-    {
-        std::cout << "(" << pathIt->y << ":" << pathIt->x << ")" << std::endl;
-        pathIt++;
-    }
+    //Create a NewPathEvent
+    NewPathEvent* event = new NewPathEvent();
 
-    std::cout << "YOU ARE NOT PUSHING THE NEW PATH EVENT YET!!!" << std::endl;
-//    NewPathEvent* event;
-//    m_eventQueue->push_back()
+    //Apply changes to the motor
+    while(!motor.path.empty()) motor.path.pop();
+    motor.behaviour = Move;
+    std::vector<Vector2>::iterator pathIt = m_shortestPath->path.begin();
+    float distanceX = pathIt->x - transform.position.x;
+    float distanceY = pathIt->y - transform.position.y;
+    float distance = sqrt(pow(distanceX, 2) + pow(distanceY, 2));
+    motor.normalizedTarget.x = distanceX / distance;
+    motor.normalizedTarget.y = distanceY / distance;
+    for(;pathIt != m_shortestPath->path.end(); pathIt++)
+    {
+        //Populate the event's path
+        event->path->push_back(Vector2(pathIt->x, pathIt->y));
+        //Populate the motor's path
+        motor.path.push(Vector2(pathIt->x, pathIt->y));
+    }
+    std::cout << std::endl;
+
+    //Create the new path event to be handled by the event manager
+    event->playerPosition = playerIndex;
+    event->motorPosition = motorPosition;
+    m_eventQueue->push_back(event);
 }
 
 bool PathfindingSystem::SeekCornerVertically(const Vector2 cornerPosition, const int direction)
@@ -144,6 +158,7 @@ bool PathfindingSystem::SeekCornerVertically(const Vector2 cornerPosition, const
             }
             //Add the position at despawn on the same column
             m_shortestPath->path.push_back(Vector2(cornerPosition.x, GRID_SIZE_Y + DESPAWN_SIZE));
+            pathPursued = true;
         }
 
         //Move on the y axis

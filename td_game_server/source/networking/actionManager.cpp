@@ -18,6 +18,7 @@ void ActionManager::Loop()
 		Action* a = m_actionQueue->front();
 		std::cout << a->ToDebuggable() << std::endl;
 		if(a != 0) SwitchAction(a);
+		delete a;
 		m_actionQueue->pop_front();
 	}
 }

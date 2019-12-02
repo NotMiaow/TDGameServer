@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <math.h>
 
 //Events
 #include "event.h"
@@ -28,7 +29,7 @@ public:
     ~PathfindingSystem() { }
     void Loop();
 private:
-    void FindPath(const int& playerIndex, MotorComponent& motor, TransformComponent& transform);
+    void FindPath(const int& playerIndex, const int& motorPosition, MotorComponent& motor, const TransformComponent& transform);
     bool SeekCornerVertically(const Vector2 cornerPosition, const int direction);
     bool SeekCornerHorizontally(const Vector2 cornerPosition, const int direction, const bool createSubPath);
     bool Pathable(const Vector2 position);

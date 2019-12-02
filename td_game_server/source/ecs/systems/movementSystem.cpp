@@ -35,7 +35,7 @@ void MovementSystem::MoveMotor(const float& deltaTime, MotorComponent& motor, Tr
 	transform.position.y += motor.normalizedTarget.y * motor.curSpeed * deltaTime;
 
 	Vector2 targetPosition = motor.path.front();
-	std::cout << transform.position.y << ":" << transform.position.x << std::endl;
+//	std::cout << transform.position.y << ":" << transform.position.x << std::endl;
 
 	//If passed target
 	if ((motor.normalizedTarget.x > 0 && transform.position.x >= targetPosition.x ||

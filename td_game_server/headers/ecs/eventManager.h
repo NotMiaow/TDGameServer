@@ -44,6 +44,7 @@ private:
     void DisconnectPlayer();
     void ReadyUpPlayer();
     void SpawnUnitGroup();
+    void SendNewPath();
     void BuildTower();
     void SellTower();
     int GetPlayerPosition(const int& clientId, PlayerComponent* player);

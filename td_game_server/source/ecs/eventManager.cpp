@@ -45,6 +45,7 @@ void EventManager::Loop()
     {
         m_event = m_eventQueue->front();
         if (m_event != 0) SwitchEvent();
+        delete m_event;
         m_eventQueue->pop_front();
     }
 }
@@ -68,6 +69,7 @@ void EventManager::SwitchEvent()
         SpawnUnitGroup();
         break;
     case ENewPath:
+        SendNewPath();
         break;
     case ERage:
         break;
@@ -157,6 +159,16 @@ void EventManager::SpawnUnitGroup()
     m_transforms->InsertNode(transform, playerPosition, UNIT_GROUP_TRANSFORMS);
     m_motors->InsertNode(motor, playerPosition, UNIT_GROUP_MOTORS);
     m_networkManager->MessageClient(socketId, event->ToNetworkable());
+}
+
+void EventManager::SendNewPath()
+{
+    NewPathEvent* event = dynamic_cast<NewPathEvent*>(m_event);
+    
+    CheckpointList<PlayerComponent>::Iterator playerIt(m_players->GetNodeHead(), 0);
+    for(int i = 0; i < event->playerPosition; i++, playerIt++);
+    std::cout << event->ToNetworkable() << std::endl;
+    m_networkManager->MessageClient(playerIt.Get()->client->socketId, event->ToNetworkable());    
 }
 
 void EventManager::BuildTower()
