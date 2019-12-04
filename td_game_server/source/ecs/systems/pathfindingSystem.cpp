@@ -42,6 +42,7 @@ void PathfindingSystem::FindPath(const int& playerIndex, const int& motorPositio
             if(!m_pathinGrid[0][i])
             {
                 std::vector<Vector2> path;
+                path.push_back(Vector2(i, (int)transform.position.y));
                 path.push_back(Vector2(i,0));
                 Path newPath(path);
                 m_paths.push_back(newPath);
