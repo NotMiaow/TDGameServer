@@ -51,7 +51,7 @@ I aim to, at the very least, build it into a worthy portfolio project.
 - Requires Cmake
 - On Linux :
   - Run "make" in terminal to compile the game server
-  - Run ./_bin/debug to start the game server
+  - Run "./_bin/debug" to start the game server
 - On Winwdows :
   - There is currently no windows support because of ![NetworkManager](td_game_server/headers/networking/networkManager.h "NetworkManager")'s implementation.
   - I am not sure wether or not this will be implemented later as I would use a Linux machine run this program if I ever had to..!
