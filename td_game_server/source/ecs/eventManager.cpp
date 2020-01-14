@@ -65,6 +65,7 @@ void EventManager::SwitchEvent()
     case EReadyUp:
         ReadyUpPlayer();
         break;
+    //TEMPORARY
     case ESpawnUnitGroup:
         SpawnUnitGroup();
         break;
@@ -72,6 +73,7 @@ void EventManager::SwitchEvent()
         SendNewPath();
         break;
     case ERage:
+//        Rage();
         break;
     case EBuildTower:
         BuildTower();

@@ -162,6 +162,7 @@ struct RageEvent : public Event
 		return os.str();
 	}
 
+	int playerPosition;
 	int motorPosition;
 };
 
