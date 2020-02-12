@@ -1,6 +1,6 @@
 #include "pathfindingSystem.h"
 
-PathfindingSystem::PathfindingSystem(SharedQueue<Event*>& eventQueue, CheckpointList<MotorComponent>& motors, CheckpointList<TransformComponent>& transforms)
+PathfindingSystem::PathfindingSystem(SharedQueue<Event*>& eventQueue, Motors& motors, Transforms& transforms)
 {
     m_eventQueue = &eventQueue;
     m_motors = &motors;
@@ -11,63 +11,35 @@ void PathfindingSystem::Loop()
 {
     for(int i = 0; i < MAX_CLIENTS; i++)
     {
-        CheckpointList<MotorComponent>::Iterator motorIt = m_motors->GetIterator(i, UNIT_GROUP_MOTORS);
-        CheckpointList<TransformComponent>::Iterator transformIt = m_transforms->GetIterator(i, UNIT_GROUP_TRANSFORMS);
-        for(int j = 0;!motorIt.End(); j++, motorIt++, transformIt++)
-            if(motorIt.Get()->behaviour == WaitingForPath)
-                FindPath(i, j, *motorIt.Get(), *transformIt.Get());
+        for(std::tuple<MotorIterator, TransformIterator> j = std::make_tuple 
+            (
+                m_motors->GetIterator(GetCheckpoint(i, TMotor, UNIT_GROUP_MOTORS)),
+                m_transforms->GetIterator(GetCheckpoint(i, TTransform, UNIT_GROUP_TRANSFORMS))
+            );
+            !std::get<0>(j).End(); std::get<0>(j)++, std::get<1>(j)++)
+        {
+            Motors::Entry* motor = std::get<0>(j).GetEntry();
+            TransformComponent* transform = std::get<1>(j).GetData();
+
+            if(motor->data.behaviour == WaitingForPath)
+                FindPath(i, motor->entityId, motor->data, *transform);
+        }
     }
 }
 
-void PathfindingSystem::FindPath(const int& playerIndex, const int& motorPosition, MotorComponent& motor, const TransformComponent& transform)
+void PathfindingSystem::FindPath(const int& playerIndex, const int& motorId, MotorComponent& motor, const TransformComponent& transform)
 {
-    //Reset pathing fields
-    if(!m_paths.empty()) m_shortestPath->path.clear();
-    m_paths.clear();
-    m_corners.clear();
-    for(int i = 0; i < GRID_SIZE_Y; i++)
-        for(int j = 0; j < GRID_SIZE_X; j++)
-            m_pathinGrid[i][j] = false;
-
-    //Generate pathing grid
-    CheckpointList<TransformComponent>::Iterator transformIt = m_transforms->GetIterator(playerIndex, TOWER_TRANSFORMS);
-    for(; !transformIt.End(); transformIt++)
-        m_pathinGrid[(int)transformIt.Get()->position.y][(int)transformIt.Get()->position.x] = true;
-
-    //Transform is in spawn
-    if(transform.position.y < 0)
-    {
-        for(int i = 0; i < GRID_SIZE_X; i++)
-            if(!m_pathinGrid[0][i])
-            {
-                std::vector<Vector2> path;
-                path.push_back(Vector2(i, (int)transform.position.y));
-                path.push_back(Vector2(i,0));
-                Path newPath(path);
-                m_paths.push_back(newPath);
-            }
-    }
-    //Transform is in grid
-    else
-    {
-        std::vector<Vector2> newPath;
-        newPath.push_back(transformIt.Get()->position);
-        m_paths.push_back(newPath);       
-    }
+    Reset();
+    GetPathingGrid(playerIndex);
+    if(transform.position.y < 0)    SpawnInit(transform);
+    else                            GridInit(transform);
 
     bool pathFound = false;
-    //Find path
     while (!m_paths.empty() && !pathFound)
     {
-        //Get shortest of current paths
-        m_shortestPath = m_paths.begin();
-        for(int i = 0; i < m_paths.size(); i++)
-            if(m_paths.at(i).totalDistance < m_shortestPath->totalDistance)
-                m_shortestPath = m_paths.begin() + i;
-
+        SelectShortestPath();
         if(SeekCornerVertically(m_shortestPath->path.back(), 1))
         {
-            //END CONDITION - PATH FOUND
             if(m_shortestPath->path.back().y == GRID_SIZE_Y + DESPAWN_SIZE)
                 pathFound = true;
         }
@@ -75,32 +47,9 @@ void PathfindingSystem::FindPath(const int& playerIndex, const int& motorPositio
             m_paths.erase(m_shortestPath);
     }
 
-
-    if(pathFound)
-    {
-        while(!motor.path.empty())
-            motor.path.pop();
-
-        motor.behaviour = Move;
-        std::vector<Vector2>::iterator pathIt = m_shortestPath->path.begin();
-        float distanceX = pathIt->x - transform.position.x;
-        float distanceY = pathIt->y - transform.position.y;
-        float distance = sqrt(pow(distanceX, 2) + pow(distanceY, 2));
-        motor.normalizedTarget.x = distanceX / distance;
-        motor.normalizedTarget.y = distanceY / distance;
-
-        NewPathEvent* event = new NewPathEvent();
-        for(;pathIt != m_shortestPath->path.end(); pathIt++)
-        {
-            motor.path.push(Vector2(pathIt->x, pathIt->y));
-            event->path->push_back(Vector2(pathIt->x, pathIt->y));
-        }
-
-        event->playerPosition = playerIndex;
-        event->motorPosition = motorPosition;
-        m_eventQueue->push_back(event);
-    }
-    else motor.behaviour = Rage;
+    motor.path.clear();
+    if(pathFound)   SetPath(motorId, motor, transform);
+    else            SetRage(motorId, motor);
 }
 
 bool PathfindingSystem::SeekCornerVertically(const Vector2 cornerPosition, const int direction)
@@ -155,8 +104,9 @@ bool PathfindingSystem::SeekCornerHorizontally(const Vector2 cornerPosition, con
         if(!wallUp && previousWallUp || !wallDown && previousWallDown)
         {
             const Vector2 shoulder = pathPursued ? *(m_shortestPath->path.end() - 3) : *(m_shortestPath->path.end() - 1);
-            const int totalDistance = pathPursued ? m_shortestPath->previousDistance : m_shortestPath->totalDistance;
             const int verticalDistance = ToAbsoluteInt((int)(cornerPosition.y - shoulder.y));
+
+            const int totalDistance = pathPursued ? m_shortestPath->previousDistance : m_shortestPath->totalDistance;
             const int horizontalDistance = ToAbsoluteInt((int)(position.x - cornerPosition.x));
 
             if(AddCorner(cornerPosition, totalDistance + verticalDistance) && AddCorner(position, totalDistance + verticalDistance + horizontalDistance))
@@ -186,6 +136,88 @@ bool PathfindingSystem::SeekCornerHorizontally(const Vector2 cornerPosition, con
         positionDown.x += direction;
     }
     return pathPursued;
+}
+
+void PathfindingSystem::Reset()
+{
+    if(!m_paths.empty()) m_shortestPath->path.clear();
+    m_paths.clear();
+    m_corners.clear();
+    for(int i = 0; i < GRID_SIZE_Y; i++)
+        for(int j = 0; j < GRID_SIZE_X; j++)
+            m_pathinGrid[i][j] = false;
+}
+
+void PathfindingSystem::GetPathingGrid(const int& playerIndex)
+{
+    for(TransformIterator transformIt = m_transforms->GetIterator(GetCheckpoint(playerIndex, TTransform, TOWER_TRANSFORMS)); !transformIt.End(); transformIt++)
+        m_pathinGrid[(int)transformIt.GetData()->position.y][(int)transformIt.GetData()->position.x] = true;
+}
+
+void PathfindingSystem::SpawnInit(const TransformComponent& transform)
+{
+    for(int i = 0; i < GRID_SIZE_X; i++)
+    {
+        if(!m_pathinGrid[0][i])
+        {
+            std::vector<Vector2> path;
+            path.push_back(Vector2(i, (int)round(transform.position.y)));
+            path.push_back(Vector2(i, 0));
+            Path newPath(path);
+            m_paths.push_back(newPath);
+        }
+    }
+}
+
+void PathfindingSystem::GridInit(const TransformComponent& transform)
+{
+    std::cout << "Transform is in grid" << std::endl;
+    std::cout << "(" << (int)round(transform.position.x) << ":" << (int)round(transform.position.y) << ")" << std::endl;
+    std::cout << "(" << transform.position.x << ":" << transform.position.y << ")" << std::endl;
+    Vector2 startingPosition((int)round(transform.position.x), (int)round(transform.position.y));
+    std::cout << "hi1" << std::endl;
+    bool pathFound = SeekCornerHorizontally(startingPosition, 1, false);
+    std::cout << "hi2: " << pathFound << std::endl;
+    pathFound = SeekCornerHorizontally(startingPosition, -1, pathFound);
+    std::cout << "hi3: " << pathFound << std::endl;
+}
+
+void PathfindingSystem::SelectShortestPath()
+{
+    m_shortestPath = m_paths.begin();
+    for(int i = 0; i < m_paths.size(); i++)
+        if(m_paths.at(i).totalDistance < m_shortestPath->totalDistance)
+            m_shortestPath = m_paths.begin() + i;
+}
+
+void PathfindingSystem::SetPath(const int& motorId, MotorComponent& motor, const TransformComponent& transform)
+{
+        std::cout << "PATH FOUND" << std::endl;
+        motor.behaviour = Move;
+        float distanceX = m_shortestPath->path.at(0).x - transform.position.x;
+        float distanceY = m_shortestPath->path.at(0).y - transform.position.y;
+        float distance = sqrt(pow(distanceX, 2) + pow(distanceY, 2));
+        motor.normalizedTarget.x = distanceX / distance;
+        motor.normalizedTarget.y = distanceY / distance;
+
+        NewPathEvent* event = new NewPathEvent();
+        for(std::vector<Vector2>::iterator pathIt = m_shortestPath->path.begin();
+            pathIt != m_shortestPath->path.end(); pathIt++)
+        {
+            motor.path.push_back(Vector2(pathIt->x, pathIt->y));
+            event->path->push_back(Vector2(pathIt->x, pathIt->y));
+        }
+        event->entityId = motorId;
+        m_eventQueue->push_back(event);
+}
+
+void PathfindingSystem::SetRage(const int& motorId, MotorComponent& motor)
+{
+    std::cout << "RAGE" << std::endl;
+    motor.behaviour = Rage;
+    RageEvent* event = new RageEvent();
+    event->entityId = motorId;
+    m_eventQueue->push_back(event);
 }
 
 bool PathfindingSystem::Pathable(const Vector2 position)

@@ -13,7 +13,7 @@
 #include "vector2.h"
 #include "path.h"
 
-#include "checkpointList.h"
+#include "componentArray.h"
 //Components
 #include "motorComponent.h"
 #include "transformComponent.h"
@@ -25,15 +25,15 @@ class RageSystem
 {
 public:
     RageSystem() { }
-    RageSystem(SharedQueue<Event*>& eventQueue, CheckpointList<MotorComponent>& motors, CheckpointList<TransformComponent>& transforms);
+    RageSystem(SharedQueue<Event*>& eventQueue, Motors& motors, Transforms& transforms);
     ~RageSystem() { }
     void Loop();
 private:
     void AssignTarget(const int& playerIndex, const int& motorPosition, MotorComponent& motor, const TransformComponent& transform);
 private:
     SharedQueue<Event*>* m_eventQueue;
-    CheckpointList<MotorComponent>* m_motors;
-    CheckpointList<TransformComponent>* m_transforms;
+    Motors* m_motors;
+    Transforms* m_transforms;
 };
 
 #endif

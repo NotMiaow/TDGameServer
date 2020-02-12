@@ -11,7 +11,8 @@
 #include "event.h"
 #include "action.h"
 
-#include "checkpointList.h"
+#include "entityCounter.h"
+#include "componentArray.h"
 //Components
 #include "playerComponent.h"
 #include "bankComponent.h"
@@ -57,13 +58,14 @@ private:
 	ActionManager m_actionManager;
 
 	//Components
-	CheckpointList<PlayerComponent> m_players;
-	CheckpointList<BankComponent> m_banks;
-	CheckpointList<OffenseComponent> m_offenses;
-	CheckpointList<MotorComponent> m_motors;
-	CheckpointList<TransformComponent> m_transforms;
+	Players m_players;
+	Banks m_banks;
+	Motors m_motors;
+	Offenses m_offenses;
+	Transforms m_transforms;
 
 	//Misc
+	EntityCounter m_entityCounter;
 	EventManager m_eventManager;
 	ECS m_ecs;
 };

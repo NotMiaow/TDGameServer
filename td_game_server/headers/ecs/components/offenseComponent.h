@@ -3,6 +3,9 @@
 
 struct OffenseComponent
 {
+	OffenseComponent() { }
+	OffenseComponent(const float& baseAttackRate, const int& baseDamage) : baseAttackRate(baseAttackRate), curAttackRate(baseAttackRate),
+		baseDamage(baseDamage), curDamage(baseDamage) { }
 	//DamageType damageType;
 	float baseAttackRate;
 	float curAttackRate;

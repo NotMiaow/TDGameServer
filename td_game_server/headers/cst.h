@@ -26,9 +26,23 @@ const int POST_GAME_DURATION = 1; //Milliseconds
 //ECS constants
 enum PlayerCheckpoints { PLAYER_PLAYERS = 0, PLAYER_CHECKPOINT_SIZE };
 enum BankCheckpoints { PLAYER_BANKS = 0, BANK_CHECKPOINT_SIZE };
-enum TransformsCheckpoint { UNIT_GROUP_TRANSFORMS = 0, TOWER_TRANSFORMS, TRANSFORM_CHECKPOINT_SIZE };
 enum MotorCheckpoints { UNIT_GROUP_MOTORS = 0, MOTOR_CHECKPOINT_SIZE };
 enum OffenseCheckpointss { UNIT_GROUP_OFFENSES = 0, TOWER_OFFENSES, OFFENSE_CHECKPOINT_SIZE };
+enum TransformsCheckpoint { UNIT_GROUP_TRANSFORMS = 0, TOWER_TRANSFORMS, TRANSFORM_CHECKPOINT_SIZE };
+
+enum ComponentTypes { TPlayer, TBank, TMotor, TOffense, TTransform };
+static int GetCheckpoint(const int& playerIndex, const ComponentTypes& componentType, const int& checkpointIndex)
+{
+    switch (componentType)
+    {
+    case TPlayer:    return playerIndex * PLAYER_CHECKPOINT_SIZE + checkpointIndex;
+    case TBank:      return playerIndex * BANK_CHECKPOINT_SIZE + checkpointIndex;
+    case TMotor:     return playerIndex * MOTOR_CHECKPOINT_SIZE + checkpointIndex;
+    case TOffense:   return playerIndex * OFFENSE_CHECKPOINT_SIZE + checkpointIndex;
+    case TTransform: return playerIndex * TRANSFORM_CHECKPOINT_SIZE + checkpointIndex;
+    default:        return -1;
+    }
+}
 
 //Debugging constants
 //These constants are used to fake that a clients were assigned to this game server

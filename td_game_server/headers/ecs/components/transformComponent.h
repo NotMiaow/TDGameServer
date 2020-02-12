@@ -5,6 +5,9 @@
 
 struct TransformComponent
 {
+    TransformComponent() { }
+    TransformComponent(const Vector2& position) : position(position) { }
+
     Vector2 position;
     //Vector3 scale;
 };

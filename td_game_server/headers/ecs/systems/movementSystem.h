@@ -9,17 +9,19 @@
 
 #include "timeSystem.h"
 
-#include "checkpointList.h"
+#include "componentArray.h"
 #include "vector2.h"
 #include "path.h"
 #include "motorComponent.h"
 #include "transformComponent.h"
 
+#include "definitions.h"
+
 class MovementSystem
 {
 public:
 	MovementSystem();
-	MovementSystem(CheckpointList<MotorComponent>& motors, CheckpointList<TransformComponent>& transforms);
+	MovementSystem(Motors& motors, Transforms& transforms);
 	~MovementSystem();
 	void Loop(const float& deltaTime);
 private:
@@ -27,8 +29,8 @@ private:
 private:
 	TimeSystem* m_timeSystem;
 
-	CheckpointList<MotorComponent>* m_motors;
-	CheckpointList<TransformComponent>* m_transforms;
+	Motors* m_motors;
+	Transforms* m_transforms;
 };
 
 #endif

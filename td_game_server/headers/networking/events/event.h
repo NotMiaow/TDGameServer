@@ -16,12 +16,13 @@
 #include "basicLib.h"
 #include "vector2.h"
 
-#include "checkpointList.h"
+#include "componentArray.h"
 //Components
 #include "playerComponent.h"
 #include "bankComponent.h"
 
 //Misc
+#include "definitions.h"
 #include "cst.h"
 
 struct Event
@@ -30,6 +31,7 @@ struct Event
 	virtual std::string ToNetworkable() const = 0;
 
 	int clientId;
+	int playerId;
 };
 
 struct ErrorEvent : public Event
@@ -44,7 +46,7 @@ struct ErrorEvent : public Event
 	std::string ToNetworkable() const
 	{
 		std::ostringstream os;
-		os << "{" << EError << ";" << eType << ";" << geType << "}";
+		os << '{' << EError << ';' << eType << ';' << geType << '}';
 		return os.str();
 	}
 
@@ -62,7 +64,7 @@ struct ConnectEvent : public Event
 	std::string ToNetworkable() const
 	{
 		std::ostringstream os;
-		os << "{" << EConnect << "}";
+		os << '{' << EConnect << '}';
 		return os.str();
 	}
 };
@@ -78,7 +80,7 @@ struct DisconnectEvent : public Event
 	std::string ToNetworkable() const
 	{
 		std::ostringstream os;
-		os << "{" << EDisconnect << ";" << reason << "}";
+		os << '{' << EDisconnect << ';' << reason << '}';
 		return os.str();
 	}
 
@@ -87,33 +89,33 @@ struct DisconnectEvent : public Event
 
 struct ReadyUpEvent : public Event
 {
-	ReadyUpEvent(const int&  clientId)
+	ReadyUpEvent(const int& clientId)
 	{
 		this->clientId = clientId;
+		entityIds = new std::vector<int>();
 	}
+	~ReadyUpEvent() { delete entityIds; }
 	EventType GetType() const { return EReadyUp; }
 	std::string ToNetworkable() const
 	{
-		CheckpointList<PlayerComponent>::Iterator playerIt(players->GetNodeHead(), 0);
-		CheckpointList<BankComponent>::Iterator bankIt(banks->GetNodeHead(), 0);
-		PlayerComponent* player;
-		BankComponent* bank;
-		std::string message = "{" + std::to_string(EReadyUp) + ";" + std::to_string(playerPosition) + ";";
-		for(;!playerIt.End(); playerIt++, bankIt++)
+		std::string message = '{' + std::to_string(EReadyUp) + ';' + std::to_string(playerId) + ';';
+		std::vector<int>::iterator idIt = entityIds->begin();
+		PlayerIterator playerIt = players->GetIterator();
+		BankIterator bankIt = banks->GetIterator();
+		for(; idIt != entityIds->end(); idIt++, playerIt++, bankIt++)
 		{
-			player = playerIt.Get();
-			bank =   bankIt.Get();
-			message += std::to_string(player->connected) + ";" + std::to_string(player->ready) + ";" + std::to_string(player->lives) + ";" + 
-						std::to_string(bank->gold) + ";" + std::to_string(bank->income) + ";";
+			message += 	std::to_string(playerIt.GetData()->connected) + ';' + std::to_string(playerIt.GetData()->ready) + ';' +
+						std::to_string(*idIt) + ';' + std::to_string(playerIt.GetData()->lives) + ';' +
+						std::to_string(bankIt.GetData()->gold) + ';' + std::to_string(bankIt.GetData()->income) + ';';
 		}
-		message = message.substr(0, message.length() - 2);
-		message += "}";
+		message = message.substr(0, message.length() - 1);
+		message += '}';
 		return message;
 	}
 
-	int playerPosition;
-	CheckpointList<PlayerComponent>* players;
-	CheckpointList<BankComponent>* banks;
+	std::vector<int>* entityIds;
+	Players* players;
+	Banks* banks;
 };
 
 struct SpawnUnitGroupEvent : public Event
@@ -126,9 +128,11 @@ struct SpawnUnitGroupEvent : public Event
 	std::string ToNetworkable() const
 	{
 		std::ostringstream os;
-		os << "{" << ESpawnUnitGroup << "}";
+		os << '{' << ESpawnUnitGroup << ';' << playerId << ';' << entityId << '}';
 		return os.str();
 	}
+
+	int entityId;
 };
 
 struct NewPathEvent : public Event
@@ -139,15 +143,14 @@ struct NewPathEvent : public Event
 	std::string ToNetworkable() const
 	{
 		std::ostringstream os;
-		os << "{" << ENewPath << ";" << playerPosition << ";" << motorPosition << ";";
+		os << '{' << ENewPath << ';' << playerId << ';' << entityId << ';';
 		for(std::vector<Vector2>::iterator pathIt = path->begin(); pathIt != path->end(); pathIt++)
-			os << "(" << pathIt->y << ":" << pathIt->x << ")";
-		os << "}";
+			os << '(' << pathIt->y << ':' << pathIt->x << ')';
+		os << '}';
 		return os.str();
 	}
 
-	int playerPosition;
-	int motorPosition;
+	int entityId;
 	std::vector<Vector2>* path;
 };
 
@@ -158,12 +161,11 @@ struct RageEvent : public Event
 	std::string ToNetworkable() const
 	{
 		std::ostringstream os;
-		os << "{" << ERage << ";" << motorPosition << "}";
+		os << '{' << ERage << ';' << playerId << ';' << entityId << '}';
 		return os.str();
 	}
 
-	int playerPosition;
-	int motorPosition;
+	int entityId;
 };
 
 struct BuildTowerEvent : public Event
@@ -179,10 +181,11 @@ struct BuildTowerEvent : public Event
 	std::string ToNetworkable() const
 	{
 		std::ostringstream os;
-		os << "{" << EBuildTower << ";" << remainingGold << ";" << towerType << ";(" << position.y << ":" << position.x << ")}";
+		os << '{' << EBuildTower << ';' << playerId << ';' << remainingGold << ';' << entityId << ';' << towerType << ";(" << position.y << ':' << position.x << ")}";
 		return os.str();
 	}
 
+	int entityId;
 	int remainingGold;
 	int towerType;
 	Vector2 position;
@@ -190,21 +193,21 @@ struct BuildTowerEvent : public Event
 
 struct SellTowerEvent : public Event
 {
-	SellTowerEvent(const int&  clientId, const Vector2& towerPosition)
+	SellTowerEvent(const int&  clientId, const int& entityId)
 	{
 		this->clientId = clientId;
-		this->towerPosition.x = towerPosition.x;
-		this->towerPosition.y = towerPosition.y;
+		this->entityId = entityId;
 	}
 	EventType GetType() const { return ESellTower; }
 	std::string ToNetworkable() const
 	{
 		std::ostringstream os;
-		os << "{" << ESellTower << ";(" << towerPosition.y << ":" << towerPosition.x << ");" << remainingGold << "}";
+		os << '{' << ESellTower << ';' <<  playerId << ';' << entityId << ';' << remainingGold << '}';
 		return os.str();
 	}
 
-	Vector2 towerPosition;
+	int playerId;
+	int entityId;
 	int remainingGold;
 };
 
@@ -219,7 +222,7 @@ struct SendUnitGroupEvent : public Event
 	std::string ToNetworkable() const
 	{
 		std::ostringstream os;
-		os << "{" << ESendUnitGroup << "}";
+		os << '{' << ESendUnitGroup << '}';
 	}
 
 	int unitType;

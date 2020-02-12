@@ -3,6 +3,9 @@
 
 struct DefenseComponent
 {
+    DefenseComponent() { }
+    DefenseComponent(const int& baseHealth, const int& baseHealthRegeneration) : baseHealth(baseHealth), maxHealth(baseHealth),
+        curHealth(baseHealth), baseHealthRegeneration(baseHealthRegeneration), healthRegeneration(baseHealthRegeneration) {  }
     int baseHealth;
     int maxHealth;
     int curHealth;

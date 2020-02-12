@@ -4,7 +4,7 @@
 #include <iostream>
 #include <tuple>
 #include <math.h>
-#include <queue>
+#include <deque>
 
 //Paths
 #include "vector2.h"
@@ -14,7 +14,8 @@
 #include "event.h"
 #include "shared_queue.h"
 
-#include "checkpointList.h"
+#include "entityCounter.h"
+#include "componentArray.h"
 //Components
 #include "client.h"
 #include "playerComponent.h"
@@ -27,6 +28,7 @@
 #include "networkManager.h"
 
 //Misc
+#include "definitions.h"
 #include "gameEnums.h"
 
 class EventManager
@@ -34,9 +36,8 @@ class EventManager
 public:
     EventManager() { }
     ~EventManager();
-    void Init(Client* clients, NetworkManager& networkManager, SharedQueue<Event*>& eventQueue, CheckpointList<PlayerComponent>& players, 
-                CheckpointList<BankComponent>& banks, CheckpointList<OffenseComponent>& offenses, CheckpointList<MotorComponent>& motors,
-                CheckpointList<TransformComponent>& transforms);
+    void Init(Client* clients, NetworkManager& networkManager, SharedQueue<Event*>& eventQueue, EntityCounter& entityCounter, Players& players, Banks& banks,
+            Offenses& offenses, Motors& motors, Transforms& transforms);
     void Loop();
 private:
     void SwitchEvent();
@@ -45,18 +46,20 @@ private:
     void ReadyUpPlayer();
     void SpawnUnitGroup();
     void SendNewPath();
+    void Rage();
     void BuildTower();
     void SellTower();
     int GetPlayerPosition(const int& clientId, PlayerComponent* player);
 private:
+    EntityCounter* m_entityCounter;
     Event* m_event;
     SharedQueue<Event*>* m_eventQueue;
 
-   	CheckpointList<PlayerComponent>* m_players;
-    CheckpointList<BankComponent>* m_banks;
-    CheckpointList<OffenseComponent>* m_offenses;
-   	CheckpointList<MotorComponent>* m_motors;
-	CheckpointList<TransformComponent>* m_transforms;
+   	Players* m_players;
+    Banks* m_banks;
+    Offenses* m_offenses;
+   	Motors* m_motors;
+	Transforms* m_transforms;
 
     NetworkManager* m_networkManager;
 };

@@ -4,7 +4,7 @@ MovementSystem::MovementSystem()
 {
 }
 
-MovementSystem::MovementSystem(CheckpointList<MotorComponent>& motors, CheckpointList<TransformComponent>& transforms)
+MovementSystem::MovementSystem(Motors& motors, Transforms& transforms)
 {
 	m_motors = &motors;
 	m_transforms = &transforms;
@@ -19,16 +19,26 @@ void MovementSystem::Loop(const float& deltaTime)
 {
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		CheckpointList<MotorComponent>::Iterator motorIt = m_motors->GetIterator(i, UNIT_GROUP_MOTORS);
-		CheckpointList<TransformComponent>::Iterator transformIt = m_transforms->GetIterator(i, UNIT_GROUP_TRANSFORMS);
-		for(; !motorIt.End(); motorIt++, transformIt++)
-			if(!motorIt.Get()->path.empty())
-				MoveMotor(deltaTime, *motorIt.Get(), *transformIt.Get());
+        for(std::tuple<MotorIterator, TransformIterator> j = std::make_tuple 
+            (
+                m_motors->GetIterator(GetCheckpoint(i, TMotor, UNIT_GROUP_MOTORS)),
+                m_transforms->GetIterator(GetCheckpoint(i, TTransform, UNIT_GROUP_TRANSFORMS))
+            );
+            !std::get<0>(j).End(); std::get<0>(j)++, std::get<1>(j)++)
+        {
+			MotorComponent* motor = std::get<0>(j).GetData();
+			TransformComponent* transform = std::get<1>(j).GetData();
+			if(!motor->path.empty())
+				MoveMotor(deltaTime, *motor, *transform);
+        }
 	}
 }
 
 void MovementSystem::MoveMotor(const float& deltaTime, MotorComponent& motor, TransformComponent& transform)
 {
+	if(motor.normalizedTarget.x == 0 && motor.normalizedTarget.y == 0)
+		return;
+
 	//Translate motor
 	transform.position.x += motor.normalizedTarget.x * motor.curSpeed * deltaTime;
 	transform.position.y += motor.normalizedTarget.y * motor.curSpeed * deltaTime;
@@ -46,7 +56,7 @@ void MovementSystem::MoveMotor(const float& deltaTime, MotorComponent& motor, Tr
 		transform.position.y = targetPosition.y;
 		
 		//Remove target from motor's path
-		motor.path.pop();
+		motor.path.pop_front();
 
 		//Update normalised target
 		if(!motor.path.empty())
